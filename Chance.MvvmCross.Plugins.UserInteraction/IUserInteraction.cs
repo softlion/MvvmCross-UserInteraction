@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction
@@ -22,6 +23,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 
 	    Task<ConfirmThreeButtonsResponse> ConfirmThreeButtonsAsync(string message, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe");
+
+        CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true);
 	}
 }
-

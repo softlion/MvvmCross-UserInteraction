@@ -1,6 +1,8 @@
 using System;
+using System.Threading;
 using Android.App;
 using Android.Content;
+using Android.Views;
 using Cirrious.CrossCore;
 using Android.Widget;
 using Cirrious.CrossCore.Droid.Platform;
@@ -83,7 +85,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        return tcs.Task;
 	    }
 
-		public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
+
+	    public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
 		{
 			Application.SynchronizationContext.Post(ignored => {
 				if (CurrentActivity == null) return;
@@ -142,6 +145,58 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 			Input(message, (ok, text) => tcs.SetResult(new InputResponse {Ok = ok, Text = text}),	placeholder, title, okButton, cancelButton);
 			return tcs.Task;
 		}
+
+	    public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
+	    {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+	        if (CurrentActivity != null)
+	        {
+                CurrentActivity.RunOnUiThread(() =>
+                {
+	                var input = new ProgressBar(CurrentActivity, null, Android.Resource.Attribute.ProgressBarStyle)
+	                {
+	                    Indeterminate = true,
+                        LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50),DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
+	                };
+
+                    var dialog = new AlertDialog.Builder(CurrentActivity)
+	                    .SetMessage(message)
+	                    .SetTitle(title)
+	                    .SetView(input)
+	                    .SetCancelable(userCanDismiss);
+
+	                if (userCanDismiss)
+	                    dialog.SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel));
+
+	                var dlg = dialog.Show();
+	                dismiss.Register(dlg.Dismiss);
+                });
+	        }
+
+	        return cancellationTokenSource.Token;	   
+        }
+
+	    private static int DpToPixel(float dp)
+	    {
+	        return (int)(dp*((int)Application.Context.Resources.DisplayMetrics.DensityDpi)/160f+.5);
+	    }
 	}
+
+    internal class DialogCancelledListener : Java.Lang.Object, IDialogInterfaceOnCancelListener
+    {
+        readonly Action action;
+
+        public DialogCancelledListener(Action action)
+        {
+            this.action = action;
+        }
+
+        public void OnCancel(IDialogInterface dialog)
+        {
+            if (action != null)
+                action();
+        }
+    }
 }
 

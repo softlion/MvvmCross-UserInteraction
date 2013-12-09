@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using MonoTouch.UIKit;
 using System.Threading.Tasks;
 
@@ -123,6 +125,37 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 			Input(message, (ok, text) => tcs.SetResult(new InputResponse {Ok = ok, Text = text}),	placeholder, title, okButton, cancelButton);
 			return tcs.Task;
 		}
-	}
-}
 
+
+        public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            UIApplication.SharedApplication.InvokeOnMainThread(() =>
+            {
+				var input = new UIAlertView { Title = title ?? string.Empty, Message = message };
+                
+                //Adding an indicator by either of these 2 methods won't work. Why ?
+
+                //var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge);
+                //input.Add(indicator);
+
+                //var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) { TranslatesAutoresizingMaskIntoConstraints = false };
+                //input.Add(indicator);
+                //input.AddConstraint(NSLayoutConstraint.Create(indicator, NSLayoutAttribute.CenterX, NSLayoutRelation.Equal, input, NSLayoutAttribute.CenterX, 1, 0));
+                ////input.AddConstraint(NSLayoutConstraint.Create(indicator, NSLayoutAttribute.CenterY, NSLayoutRelation.Equal, input, NSLayoutAttribute.CenterY, 1, 0));
+                //input.AddConstraint(NSLayoutConstraint.Create(indicator, NSLayoutAttribute.Width, NSLayoutRelation.Equal, null, NSLayoutAttribute.NoAttribute, 1, 50));
+                //input.AddConstraint(NSLayoutConstraint.Create(indicator, NSLayoutAttribute.Height, NSLayoutRelation.Equal, null, NSLayoutAttribute.NoAttribute, 1, 50));
+
+                if(userCanDismiss)
+                    input.Clicked += (s,e) => cancellationTokenSource.Cancel();
+
+                input.Show();
+
+                dismiss.Register(() => input.DismissWithClickedButtonIndex(0, true), true);
+            });
+
+            return cancellationTokenSource.Token;
+        }
+    }
+}

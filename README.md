@@ -78,8 +78,26 @@ public ICommand SubmitCommand
 }
 ```
 
+####Wait for an operation to complete
+```
+public ICommand SubmitCommand
+{
+		get
+		{
+                return new MvxCommand(async () =>
+                {
+                    var dismiss = new CancellationTokenSource();
+                    var userCancelled = Mvx.Resolve<IUserInteraction>().WaitIndicator(dismiss.Token, "Please wait", "Loggin in");
+
+                    await Task.Delay(3000, userCancelled);
+                    dismiss.Cancel();
+                });
+		}
+}
+```
+
 ##Adding to your project
 1. Follow stuarts directions (step 3) - http://slodge.blogspot.com/2012/10/build-new-plugin-for-mvvmcrosss.html
 2. Grab the UserInteractionPluginBootstrap file from appropriate Droid/Touch folder. Drop into your project in the Bootstrap folder, change the namespace.
 
-I will be working on a nuget package as time permits.
+There is an existing nuget package.
