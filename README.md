@@ -2,31 +2,19 @@ MvvmCross-UserInteraction Plugin
 ================================
 
 MvvmCross plugin for interacting with the user from a view model. 
+
+##Versions
+new: WaitIndicator
+update: async methods were removed, as all methods are already posting code asynchronously on the main thread.
+fix: use RunOnUiThread on android to prevent some random crashes
+
 ##Features
 1. Alert - simple alert to the user, async or optional callback when done
 2. Confirm - dialog with ok/cancel, async or callback with button clicked or just when ok clicked
 3. Input - asks user for input with ok/cancel, async or callback with button clicked and data or just data when ok clicked
 
 ##Usage
-####Alert Async
-```
-public ICommand SubmitCommand
-{
-		get
-		{
-			return new MvxCommand(async () =>
-					                      {
-					                        if (string.IsNullOrEmpty(FirstName)) 
-					                        {
-					                          await Mvx.Resolve<IUserInteraction>().AlertAsync("First Name is Required");
-					                          return;
-					                        }
-					                        //do work
-					                      });
-		}
-}
-```
-####Alert callback
+####Alert
 ```
 public ICommand SubmitCommand
 {
@@ -45,22 +33,6 @@ public ICommand SubmitCommand
 }
 ```
 
-####Confirm/Input Async
-```
-public ICommand SubmitCommand
-{
-		get
-		{
-			return new MvxCommand(async () =>
-					                      {
-					                        if (await Mvx.Resolve<IUserInteraction>().ConfirmAsync("Are you sure?"))
-					                        {
-					                        	//do work
-					                        }
-					                       });
-		}
-}
-```
 ####Confirm/Input callback
 ```
 public ICommand SubmitCommand
