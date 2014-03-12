@@ -1,6 +1,9 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Cirrious.FluentLayouts.Touch;
+using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
 using System.Threading.Tasks;
 
@@ -10,7 +13,15 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
     /// BM: ajout de WaitIndicator
     /// </summary>
 	public class UserInteraction : IUserInteraction
-	{
+    {
+        private static UIColor defaultColor;
+        public uint DefaultColor { set { defaultColor = FromArgb(value); } }
+
+        UIColor FromArgb(uint value)
+        {
+            return new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
+        }
+
 		public void Confirm(string message, Action okClicked, string title = "", string okButton = "OK", string cancelButton = "Cancel")
 		{
 			Confirm(message, confirmed =>
@@ -109,9 +120,9 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
             //var currentView = Mvx.Resolve<IMvxAndroidCurrentTopActivity>();
 
-            UIApplication.SharedApplication.InvokeOnMainThread(() =>
+            Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t => UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-				var input = new UIAlertView { Title = title ?? string.Empty, Message = message };
+				var input = new UIAlertView { Title = title ?? string.Empty, Message = message ?? string.Empty };
                 
                 //Adding an indicator by either of these 2 methods won't work. Why ?
 
@@ -135,8 +146,55 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
                 //TODO: dismiss if app goes into background mode
                 //NSNotificationCenter.UIApplicationDidEnterBackgroundNotification
-            });
+            }), TaskContinuationOptions.NotOnCanceled);
 
+            return cancellationTokenSource.Token;
+        }
+
+        public CancellationToken ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+            {
+                var currentView = UIApplication.SharedApplication.KeyWindow.Subviews.LastOrDefault();
+                if (currentView != null)
+                {
+                    var waitView = new UIView(currentView.Bounds) { AutoresizingMask = UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleRightMargin | UIViewAutoresizing.FlexibleTopMargin | UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleBottomMargin};
+                    var overlay = new UIView {BackgroundColor = UIColor.White, Alpha = 0.7f};
+                    var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) { HidesWhenStopped = true };
+                    if (argbColor.HasValue || defaultColor != null)
+                        indicator.Color = argbColor.HasValue ? FromArgb(argbColor.Value) : defaultColor;
+                    indicator.StartAnimating();
+
+                    waitView.Add(overlay);
+                    waitView.Add(indicator);
+
+                    waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+                    waitView.AddConstraints(
+                        overlay.AtTopLeftOf(waitView),
+                        overlay.AtBottomOf(waitView),
+                        overlay.AtRightOf(waitView),
+
+                        indicator.WithSameCenterX(waitView),
+                        indicator.WithSameCenterY(waitView),
+                        indicator.Width().EqualTo(60),
+                        indicator.Height().EqualTo(60)
+                        );
+
+                    waitView.Alpha = 0;
+                    currentView.Add(waitView);
+                    UIView.Animate(0.3, () => { waitView.Alpha = 1; });
+
+                    dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                    {
+                        indicator.StopAnimating();
+                        waitView.RemoveFromSuperview();
+                    }), true);
+                    //indicator.Release();
+                }
+            }), TaskContinuationOptions.NotOnCanceled);
+            
             return cancellationTokenSource.Token;
         }
     }

@@ -55,5 +55,9 @@
       <Project>{C912911A-2216-447C-ADF4-8DC190804D75}</Project>
       <Name>Chance.MvvmCross.Plugins.UserInteraction</Name>
     </ProjectReference>
+    <ProjectReference Include="C:\DiskJ\projets\SHAPR\Master\ac\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
+      <Project>{75d2da9d-dfd4-49a1-98fb-fe0f0677ef0f}</Project>
+      <Name>Cirrious.FluentLayouts.Touch</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

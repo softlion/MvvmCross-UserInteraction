@@ -21,6 +21,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 			get { return Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity; }
 		}
 
+        /// <summary>
+        /// Not used. In android use global styles instead.
+        /// </summary>
+        public uint DefaultColor { set {} }
+
+
 		public void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel")
 		{
 			Confirm(message, confirmed => {
@@ -152,34 +158,67 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    {
             var cancellationTokenSource = new CancellationTokenSource();
 
-	        if (CurrentActivity != null)
+	        Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t =>
 	        {
-                CurrentActivity.RunOnUiThread(() =>
-                {
-	                var input = new ProgressBar(CurrentActivity, null, Android.Resource.Attribute.ProgressBarStyle)
+	            if (CurrentActivity != null)
+	            {
+	                CurrentActivity.RunOnUiThread(() =>
 	                {
-	                    Indeterminate = true,
-                        LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50),DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
-	                };
+	                    var input = new ProgressBar(CurrentActivity, null, Android.Resource.Attribute.ProgressBarStyle)
+	                    {
+	                        Indeterminate = true,
+	                        LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
+	                    };
 
-                    var dialog = new AlertDialog.Builder(CurrentActivity)
-	                    .SetMessage(message)
-	                    .SetTitle(title)
-	                    .SetView(input)
-	                    .SetCancelable(userCanDismiss);
+	                    var dialog = new AlertDialog.Builder(CurrentActivity)
+	                        .SetMessage(message)
+	                        .SetTitle(title)
+	                        .SetView(input)
+	                        .SetCancelable(userCanDismiss);
 
-	                if (userCanDismiss)
 	                    dialog.SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel));
 
-	                var dlg = dialog.Show();
-	                dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
-                });
-	        }
+	                    var dlg = dialog.Show();
+	                    dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
+	                });
+	            }
+	        }, TaskContinuationOptions.NotOnCanceled);
 
 	        return cancellationTokenSource.Token;	   
         }
 
-	    private static int DpToPixel(float dp)
+        public CancellationToken ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => 
+            {
+                if (CurrentActivity != null)
+                {
+                    CurrentActivity.RunOnUiThread(() =>
+                    {
+                        var input = new ProgressBar(CurrentActivity) //, null, Android.Resource.Attribute.ProgressBarStyle)
+                        {
+                            Indeterminate = true,
+                            LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical},
+                        };
+
+                        var dialog = new AlertDialog.Builder(CurrentActivity)
+                            .SetView(input)
+                            .SetCancelable(false);
+
+                        dialog.SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel));
+
+                        var dlg = dialog.Show();
+                        dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
+                    });
+                }
+            }, TaskContinuationOptions.NotOnCanceled);
+
+	        return cancellationTokenSource.Token;	   
+        }
+
+        private static int DpToPixel(float dp)
 	    {
 	        return (int)(dp*((int)Application.Context.Resources.DisplayMetrics.DensityDpi)/160f+.5);
 	    }

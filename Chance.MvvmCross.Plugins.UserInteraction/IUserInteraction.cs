@@ -6,7 +6,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 {
 	public interface IUserInteraction
 	{
-		void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel");
+        /// <summary>
+        /// Set default color for all activity indicators
+        /// </summary>
+	    uint DefaultColor { set; }
+
+	    void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 		void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 
 		void Alert(string message, Action done = null, string title = "", string okButton = "OK");
@@ -18,5 +23,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 	        string neutral = "Maybe");
 
         CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true);
+
+        CancellationToken ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null);
 	}
 }
