@@ -187,13 +187,13 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        return cancellationTokenSource.Token;	   
         }
 
-        public CancellationToken ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
+        public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
         {
-            var cancellationTokenSource = new CancellationTokenSource();
+            var tcs = new TaskCompletionSource<int>();
 
             Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => 
             {
-                if (CurrentActivity != null)
+                if (t.IsCompleted && CurrentActivity != null)
                 {
                     CurrentActivity.RunOnUiThread(() =>
                     {
@@ -207,15 +207,31 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                             .SetView(input)
                             .SetCancelable(false);
 
-                        dialog.SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel));
+                        dialog.SetOnCancelListener(new DialogCancelledListener(() => tcs.TrySetResult(0)));
 
                         var dlg = dialog.Show();
-                        dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
+                        dismiss.Register(() =>
+                        {
+                            CurrentActivity.RunOnUiThread(dlg.Dismiss);
+                            tcs.TrySetResult(0);
+                        });
                     });
                 }
-            }, TaskContinuationOptions.NotOnCanceled);
+                else
+                    tcs.TrySetResult(0);
+            });
 
-	        return cancellationTokenSource.Token;	   
+	        return tcs.Task;	   
+        }
+
+	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
+        {
+            throw new NotImplementedException();
         }
 
         private static int DpToPixel(float dp)

@@ -1,17 +1,17 @@
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Cirrious.CrossCore;
 using Cirrious.FluentLayouts.Touch;
+using MonoTouch.AVFoundation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
 using System.Threading.Tasks;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 {
-    /// <summary>
-    /// BM: ajout de WaitIndicator
-    /// </summary>
 	public class UserInteraction : IUserInteraction
     {
         private static UIColor defaultColor;
@@ -151,51 +151,219 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
             return cancellationTokenSource.Token;
         }
 
-        public CancellationToken ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
+        public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
         {
-            var cancellationTokenSource = new CancellationTokenSource();
+            var tcs = new TaskCompletionSource<int>();
 
-            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t =>
             {
-                var currentView = UIApplication.SharedApplication.KeyWindow.Subviews.LastOrDefault();
-                if (currentView != null)
+                if (t.IsCompleted)
                 {
-                    var waitView = new UIView(currentView.Bounds) { AutoresizingMask = UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleRightMargin | UIViewAutoresizing.FlexibleTopMargin | UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleBottomMargin};
-                    var overlay = new UIView {BackgroundColor = UIColor.White, Alpha = 0.7f};
-                    var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) { HidesWhenStopped = true };
-                    if (argbColor.HasValue || defaultColor != null)
-                        indicator.Color = argbColor.HasValue ? FromArgb(argbColor.Value) : defaultColor;
-                    indicator.StartAnimating();
-
-                    waitView.Add(overlay);
-                    waitView.Add(indicator);
-
-                    waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
-                    waitView.AddConstraints(
-                        overlay.AtTopLeftOf(waitView),
-                        overlay.AtBottomOf(waitView),
-                        overlay.AtRightOf(waitView),
-
-                        indicator.WithSameCenterX(waitView),
-                        indicator.WithSameCenterY(waitView),
-                        indicator.Width().EqualTo(60),
-                        indicator.Height().EqualTo(60)
-                        );
-
-                    waitView.Alpha = 0;
-                    currentView.Add(waitView);
-                    UIView.Animate(0.3, () => { waitView.Alpha = 1; });
-
-                    dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                    UIApplication.SharedApplication.InvokeOnMainThread(() =>
                     {
-                        indicator.StopAnimating();
-                        waitView.RemoveFromSuperview();
-                    }), true);
-                    //indicator.Release();
+                        var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+                        if (currentView != null)
+                        {
+                            var waitView = new UIView {Alpha = 0};
+                            var overlay = new UIView {BackgroundColor = UIColor.White, Alpha = 0.7f};
+                            var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) {HidesWhenStopped = true};
+                            if (argbColor.HasValue || defaultColor != null)
+                                indicator.Color = argbColor.HasValue ? FromArgb(argbColor.Value) : defaultColor;
+
+                            waitView.Add(overlay);
+                            waitView.Add(indicator);
+                            currentView.Add(waitView);
+
+                            waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+                            waitView.AddConstraints(
+                                overlay.AtTopLeftOf(waitView),
+                                overlay.AtBottomOf(waitView),
+                                overlay.AtRightOf(waitView),
+
+                                indicator.WithSameCenterX(waitView),
+                                indicator.WithSameCenterY(waitView),
+                                indicator.Width().EqualTo(60),
+                                indicator.Height().EqualTo(60)
+                                );
+
+                            waitView.TranslatesAutoresizingMaskIntoConstraints = false;
+                            currentView.AddConstraints(
+                                waitView.AtTopLeftOf(currentView),
+                                waitView.AtRightOf(currentView),
+                                waitView.AtBottomOf(currentView)
+                                );
+
+                            UIView.Animate(0.4, () => { waitView.Alpha = 1; });
+                            indicator.StartAnimating();
+
+                            dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                            {
+                                indicator.StopAnimating();
+                                waitView.RemoveFromSuperview();
+                                waitView.Dispose();
+                                tcs.TrySetResult(0);
+                            }), true);
+                        }
+                        else
+                        {
+                            Mvx.Warning("UserInteraction.ActivityIndicator: no window on which to display");
+                        }
+                    });
                 }
-            }), TaskContinuationOptions.NotOnCanceled);
+                else
+                    tcs.TrySetResult(0);
+            });
             
-            return cancellationTokenSource.Token;
+            return tcs.Task;
+        }
+
+
+	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        {
+            var tcs = new TaskCompletionSource<int>();
+
+	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
+	        {
+	            var actionSheet = new UIActionSheet(title, null, cancelButton, destroyButton, otherButtons);
+	            dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
+
+	            actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);
+	            actionSheet.Clicked += (sender, args) =>
+	            {
+	                //Mvx.Warning("clicked: {0}, FirstOtherButtonIndex: {1}, cancel index: {2}, destroy index: {3}", args.ButtonIndex, actionSheet.FirstOtherButtonIndex, actionSheet.CancelButtonIndex, actionSheet.DestructiveButtonIndex);
+	                if (args.ButtonIndex == actionSheet.CancelButtonIndex)
+	                    tcs.TrySetResult(0);
+	                else if (args.ButtonIndex == actionSheet.DestructiveButtonIndex)
+	                    tcs.TrySetResult(1);
+	                else
+	                {
+	                    var index = actionSheet.FirstOtherButtonIndex < 0 ? args.ButtonIndex - 1 : args.ButtonIndex - actionSheet.FirstOtherButtonIndex;
+	                    tcs.TrySetResult(index + 2);
+	                }
+	            };
+
+                var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+	            if (currentView != null)
+	            {
+	                //Show from bottom
+	                actionSheet.ShowFrom(new RectangleF(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+	            }
+	            else
+	            {
+	                Mvx.Warning("UserInteraction.Menu: no window on which to display");
+	            }
+	        });
+
+	        return tcs.Task;
+        }
+
+        public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
+        {
+            var tcs = new TaskCompletionSource<int>();
+
+            UIApplication.SharedApplication.InvokeOnMainThread(() =>
+            {
+                //Find the view on which to display the toast
+                var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+                if (currentView == null)
+                {
+                    Mvx.Warning("UserInteraction.Toast: no window on which to display");
+                    tcs.TrySetResult(-1);
+                    return;
+                }
+
+                //UI items
+                var font = UIFont.SystemFontOfSize(UIFont.SmallSystemFontSize);
+                var holder = new UIView {Alpha = 0, BackgroundColor = UIColor.Black };
+                holder.Layer.CornerRadius = font.LineHeight/2;
+                holder.Layer.MasksToBounds = true;
+                var label = new UILabelEx {Text = text, Font = font, TextColor = UIColor.White, TextAlignment = UITextAlignment.Center, LineBreakMode = UILineBreakMode.WordWrap, Lines = 0};
+
+                //orders
+                holder.Add(label);
+                currentView.Add(holder);
+                currentView.BringSubviewToFront(holder);
+
+                //constraints
+                holder.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+                holder.AddConstraints(
+                    label.AtLeftOf(holder, 10),
+                    label.AtRightOf(holder, 10),
+                    label.AtTopOf(holder, 5),
+                    label.AtBottomOf(holder, 5)
+                    );
+
+                holder.TranslatesAutoresizingMaskIntoConstraints = false;
+                currentView.AddConstraints(
+                    holder.WithSameCenterX(currentView),
+                    holder.Width().LessThanOrEqualTo().WidthOf(currentView).Minus(15*2),
+                    position == ToastPosition.Top ? holder.AtTopOf(currentView, positionOffset) :
+                        position == ToastPosition.Bottom ? holder.AtBottomOf(currentView, positionOffset) :
+                        holder.WithSameCenterY(currentView)
+                    );
+
+                //interactions
+                var inCall = false; //Prevent rebond on tap
+                Action<bool> hideHolder = animated =>
+                {
+                    if (inCall)
+                        return;
+                    inCall = true;
+
+                    if (animated)
+                    {
+                        UIView.Animate(1f, () =>
+                        {
+                            holder.Alpha = 0;
+                        }, () =>
+                        {
+                            holder.RemoveFromSuperview();
+                            holder.Dispose();
+                            tcs.TrySetResult(0);
+                        });
+                    }
+                    else
+                    {
+                        holder.Hidden = true;
+                        holder.RemoveFromSuperview();
+                        holder.Dispose();
+                        tcs.TrySetResult(0);
+                    }
+                };
+
+                if (dismiss.HasValue)
+                    dismiss.Value.Register(() => hideHolder(false));
+                holder.AddGestureRecognizer(new UITapGestureRecognizer(() => hideHolder(true)));
+
+                UIView.Animate(1f, () => holder.Alpha = .7f, async () =>
+                {
+                    await Task.Delay((int)duration, dismiss.HasValue ? dismiss.Value : CancellationToken.None).ConfigureAwait(false);
+                    UIApplication.SharedApplication.InvokeOnMainThread(() => hideHolder(true));
+                });
+            });
+
+	        return tcs.Task;
+        }
+    }
+
+    /// <summary>
+    /// A UILabel which automatically sets its PreferredMaxLayoutWidth to its constraint width,
+    /// so it can work nicely with MvxAutolayoutTableViewSource, without additional work
+    /// </summary>
+    internal class UILabelEx : UILabel
+    {
+        public override void LayoutSubviews()
+        {
+            // Clear the preferred max layout width in case the text of the label is a single line taking less width than what would be taken from the constraints of the left and right edges to the label's superview
+            PreferredMaxLayoutWidth = 0;
+
+            base.LayoutSubviews();
+            
+            // Now that you know what the constraints gave you for the label's width, use that for the preferredMaxLayoutWidth
+            PreferredMaxLayoutWidth = Bounds.Width;
+
+            // And then layout again to get the label's correct height
+            base.LayoutSubviews();
         }
     }
 }
