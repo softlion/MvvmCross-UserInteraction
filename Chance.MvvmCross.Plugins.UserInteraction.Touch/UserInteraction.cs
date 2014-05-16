@@ -36,16 +36,23 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 		{
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-				var confirm = new UIAlertView(title ?? string.Empty, message,
-				                              null, cancelButton, okButton);
+				var confirm = new UIAlertView(title ?? string.Empty, message,null, cancelButton, okButton);
 				if (answer != null)
-				{
-					confirm.Clicked +=
-						(sender, args) =>
-							answer(confirm.CancelButtonIndex != args.ButtonIndex);
-				}
+					confirm.Clicked += (sender, args) => answer(confirm.CancelButtonIndex != args.ButtonIndex);
 				confirm.Show();
 			});
+		}
+
+		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+		{
+		    var tcs = new TaskCompletionSource<bool>();
+			UIApplication.SharedApplication.InvokeOnMainThread(() =>
+			{
+				var confirm = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton);
+				confirm.Clicked += (sender, args) => tcs.SetResult(confirm.CancelButtonIndex != args.ButtonIndex);
+				confirm.Show();
+			});
+		    return tcs.Task;
 		}
 
         public void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No", string neutral = "Maybe")

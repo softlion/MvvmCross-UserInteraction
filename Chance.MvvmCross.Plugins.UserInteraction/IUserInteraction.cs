@@ -13,6 +13,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 
 	    void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 		void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel");
+		Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 
 		void Alert(string message, Action done = null, string title = "", string okButton = "OK");
 

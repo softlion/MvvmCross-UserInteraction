@@ -41,24 +41,48 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 			//Mvx.Resolve<IMvxMainThreadDispatcher>().RequestMainThreadAction();
 		    if (CurrentActivity != null)
 		    {
-		        CurrentActivity.RunOnUiThread(() =>
-		        {
-		            new AlertDialog.Builder(CurrentActivity)
-		                .SetMessage(message)
-		                .SetTitle(title)
-		                .SetPositiveButton(okButton, delegate
-		                {
-		                    if (answer != null)
-		                        answer(true);
-		                })
-		                .SetNegativeButton(cancelButton, delegate
-		                {
-		                    if (answer != null)
-		                        answer(false);
-		                })
-		                .Show();
-		        });
+		        CurrentActivity.RunOnUiThread(() => 
+                    new AlertDialog.Builder(CurrentActivity)
+		            .SetMessage(message)
+		            .SetTitle(title)
+		            .SetPositiveButton(okButton, delegate
+		            {
+		                if (answer != null)
+		                    answer(true);
+		            })
+		            .SetNegativeButton(cancelButton, delegate
+		            {
+		                if (answer != null)
+		                    answer(false);
+		            })
+		            .Show());
 		    }
+		}
+
+        public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+		{
+		    var tcs = new TaskCompletionSource<bool>();
+		    if (CurrentActivity != null)
+		    {
+		        CurrentActivity.RunOnUiThread(() => 
+                    new AlertDialog.Builder(CurrentActivity)
+		            .SetMessage(message)
+		            .SetTitle(title)
+		            .SetPositiveButton(okButton, delegate
+		            {
+		                tcs.SetResult(true);
+		            })
+		            .SetNegativeButton(cancelButton, delegate
+		            {
+		                tcs.SetResult(false);
+		            })
+		            .Show());
+		    }
+	        else
+	        {
+	            tcs.SetResult(false);
+	        }
+		    return tcs.Task;
 		}
 
 	    public void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
@@ -227,11 +251,30 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
         {
             throw new NotImplementedException();
+
+            var tcs = new TaskCompletionSource<int>();
+
+	        if (CurrentActivity != null)
+	        {
+	            CurrentActivity.RunOnUiThread(() =>
+	            {
+	            });
+	        }
+	        else
+	        {
+	            tcs.SetResult(-2);
+	        }
+
+	        return tcs.Task;	   
         }
 
         public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
         {
             throw new NotImplementedException();
+
+            var tcs = new TaskCompletionSource<int>();
+
+	        return tcs.Task;	   
         }
 
         private static int DpToPixel(float dp)
