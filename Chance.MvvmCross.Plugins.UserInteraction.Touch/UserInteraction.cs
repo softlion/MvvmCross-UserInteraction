@@ -92,6 +92,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
 		}
 
+		public Task Alert(string message, string title = "", string okButton = "OK")
+		{
+		    var tcs = new TaskCompletionSource<bool>();
+			UIApplication.SharedApplication.InvokeOnMainThread(() =>
+			{
+				var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
+				alert.Clicked += (sender, args) => tcs.SetResult(true);
+				alert.Show();
+			});
+		    return tcs.Task;
+		}
+
 		public void Input(string message, Action<string> okClicked, string placeholder = null, string title = null, string okButton = "OK",
 		                string cancelButton = "Cancel")
 		{
@@ -225,6 +237,22 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dismiss"></param>
+        /// <param name="userCanDismiss"></param>
+        /// <param name="title"></param>
+        /// <param name="cancelButton"></param>
+        /// <param name="destroyButton"></param>
+        /// <param name="otherButtons"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Button indexes:
+        /// cancel: 0
+        /// destroy: 1
+        /// others: 2+index
+        /// </remarks>
 	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
         {
             var tcs = new TaskCompletionSource<int>();
@@ -238,14 +266,17 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	            actionSheet.Clicked += (sender, args) =>
 	            {
 	                //Mvx.Warning("clicked: {0}, FirstOtherButtonIndex: {1}, cancel index: {2}, destroy index: {3}", args.ButtonIndex, actionSheet.FirstOtherButtonIndex, actionSheet.CancelButtonIndex, actionSheet.DestructiveButtonIndex);
-	                if (args.ButtonIndex == actionSheet.CancelButtonIndex)
+	                if ((cancelButton!=null && args.ButtonIndex == actionSheet.CancelButtonIndex) || args.ButtonIndex < 0)
 	                    tcs.TrySetResult(0);
-	                else if (args.ButtonIndex == actionSheet.DestructiveButtonIndex)
+	                else if (destroyButton!=null && args.ButtonIndex == actionSheet.DestructiveButtonIndex)
 	                    tcs.TrySetResult(1);
 	                else
 	                {
-	                    var index = actionSheet.FirstOtherButtonIndex < 0 ? args.ButtonIndex - 1 : args.ButtonIndex - actionSheet.FirstOtherButtonIndex;
-	                    tcs.TrySetResult(index + 2);
+	                    var titleClicked = actionSheet.ButtonTitle(args.ButtonIndex);
+	                    var index = 2 + Array.IndexOf(otherButtons, titleClicked);
+                        //ios scrumbles the position of buttons. Method not usable.
+	                    //var index = actionSheet.FirstOtherButtonIndex < 0 ? args.ButtonIndex - 1 : args.ButtonIndex - actionSheet.FirstOtherButtonIndex;
+	                    tcs.TrySetResult(index);
 	                }
 	            };
 

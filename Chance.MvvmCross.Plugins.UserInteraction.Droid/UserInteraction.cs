@@ -134,12 +134,30 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
             }
         }
 
-        //public Task AlertAsync(string message, string title = "", string okButton = "OK")
-        //{
-        //    var tcs = new TaskCompletionSource<object>();
-        //    Alert(message, () => tcs.SetResult(null), title, okButton);
-        //    return tcs.Task;
-        //}
+		public Task Alert(string message, string title = "", string okButton = "OK")
+		{
+            var tcs = new TaskCompletionSource<object>();
+            if (CurrentActivity != null)
+            {
+                CurrentActivity.RunOnUiThread(() =>
+                {
+                    new AlertDialog.Builder(CurrentActivity)
+                        .SetMessage(message)
+                        .SetTitle(title)
+                        .SetPositiveButton(okButton, (s,e) =>
+                        {
+                            tcs.SetResult(true);
+                        })
+                        .Show();
+                });
+            }
+            else
+            {
+                tcs.SetResult(false);
+            }
+
+		    return tcs.Task;
+		}
 
 		public void Input(string message, Action<string> okClicked, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel")
 		{
