@@ -4,6 +4,15 @@ using System.Threading.Tasks;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction
 {
+    /// <summary>
+    /// Impact displayed keyboard
+    /// </summary>
+    public enum FieldType
+    {
+        Default,
+        Email
+    }
+
 	public interface IUserInteraction
 	{
         /// <summary>
@@ -18,8 +27,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 		void Alert(string message, Action done = null, string title = "", string okButton = "OK");
 		Task Alert(string message, string title = "", string okButton = "OK");
 
-		void Input(string message, Action<string> okClicked, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel");
-		void Input(string message, Action<bool, string> answer, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel");
+	    Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default);
 
 	    void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe");

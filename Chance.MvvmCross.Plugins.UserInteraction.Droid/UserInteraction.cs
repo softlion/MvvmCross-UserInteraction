@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Android.App;
 using Android.Content;
+using Android.Text;
 using Android.Views;
 using Cirrious.CrossCore;
 using Android.Widget;
@@ -70,17 +71,17 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		            .SetTitle(title)
 		            .SetPositiveButton(okButton, delegate
 		            {
-		                tcs.SetResult(true);
+		                tcs.TrySetResult(true);
 		            })
 		            .SetNegativeButton(cancelButton, delegate
 		            {
-		                tcs.SetResult(false);
+		                tcs.TrySetResult(false);
 		            })
 		            .Show());
 		    }
 	        else
 	        {
-	            tcs.SetResult(false);
+	            tcs.TrySetResult(false);
 	        }
 		    return tcs.Task;
 		}
@@ -146,36 +147,36 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                         .SetTitle(title)
                         .SetPositiveButton(okButton, (s,e) =>
                         {
-                            tcs.SetResult(true);
+                            tcs.TrySetResult(true);
                         })
                         .Show();
                 });
             }
             else
             {
-                tcs.SetResult(false);
+                tcs.TrySetResult(false);
             }
 
 		    return tcs.Task;
 		}
 
-		public void Input(string message, Action<string> okClicked, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel")
-		{
-			Input(message, (ok, text) => {
-				if (ok)
-					okClicked(text);
-			},
-			placeholder, title, okButton, cancelButton);
-		}
+	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default)
+	    {
+	        var tcs = new TaskCompletionSource<string>();
 
-		public void Input(string message, Action<bool, string> answer, string hint = null, string title = null, string okButton = "OK", string cancelButton = "Cancel")
-		{
-		    if (CurrentActivity != null)
-		    {
-		        CurrentActivity.RunOnUiThread(() =>
-		        {
-		            if (CurrentActivity == null) return;
-		            var input = new EditText(CurrentActivity) {Hint = hint};
+	        if (CurrentActivity != null)
+	        {
+	            CurrentActivity.RunOnUiThread(() =>
+	            {
+	                if (CurrentActivity == null)
+	                {
+        	            tcs.TrySetCanceled();
+	                    return;
+	                }
+
+		            var input = new EditText(CurrentActivity) {Hint = placeholder, Text = defaultValue };
+	                if (fieldType == FieldType.Email)
+	                    input.InputType = InputTypes.TextVariationEmailAddress;
 
 		            new AlertDialog.Builder(CurrentActivity)
 		                .SetMessage(message)
@@ -183,18 +184,23 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		                .SetView(input)
 		                .SetPositiveButton(okButton, delegate
 		                {
-		                    if (answer != null)
-		                        answer(true, input.Text);
+		                    tcs.TrySetResult(input.Text);
 		                })
 		                .SetNegativeButton(cancelButton, delegate
 		                {
-		                    if (answer != null)
-		                        answer(false, input.Text);
+		                    tcs.TrySetResult(null);
 		                })
 		                .Show();
-		        });
-		    }
-		}
+	            });
+	        }
+	        else
+	        {
+	            tcs.TrySetCanceled();
+	        }
+
+	        return tcs.Task;
+	    }
+
 
 	    public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
 	    {
@@ -280,7 +286,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        }
 	        else
 	        {
-	            tcs.SetResult(-2);
+	            tcs.TrySetResult(-2);
 	        }
 
 	        return tcs.Task;	   

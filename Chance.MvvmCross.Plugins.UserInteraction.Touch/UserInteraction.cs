@@ -49,7 +49,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
 				var confirm = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton);
-				confirm.Clicked += (sender, args) => tcs.SetResult(confirm.CancelButtonIndex != args.ButtonIndex);
+				confirm.Clicked += (sender, args) => tcs.TrySetResult(confirm.CancelButtonIndex != args.ButtonIndex);
 				confirm.Show();
 			});
 		    return tcs.Task;
@@ -98,40 +98,41 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
 				var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
-				alert.Clicked += (sender, args) => tcs.SetResult(true);
+				alert.Clicked += (sender, args) => tcs.TrySetResult(true);
 				alert.Show();
 			});
 		    return tcs.Task;
 		}
 
-		public void Input(string message, Action<string> okClicked, string placeholder = null, string title = null, string okButton = "OK",
-		                string cancelButton = "Cancel")
-		{
-			Input(message, (ok, text) =>
-			{
-				if (ok)
-					okClicked(text);
-			},
-			placeholder, title, okButton, cancelButton);
-		}
+	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default)
+	    {
+	        var tcs = new TaskCompletionSource<string>();
 
-		public void Input(string message, Action<bool, string> answer, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel")
-		{
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-				var input = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton);
-				input.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
-				var textField = input.GetTextField(0);
-				textField.Placeholder = placeholder;
-				if (answer != null)
+				var input = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
+			    var textField = input.GetTextField(0);
+                if(placeholder != null)
+				    textField.Placeholder = placeholder;
+                if(defaultValue != null)
+			        textField.Text = defaultValue;
+			    if (fieldType != FieldType.Default)
+			    {
+			        if(fieldType == FieldType.Email)
+                        textField.KeyboardType = UIKeyboardType.EmailAddress;
+			    }
+
+				input.Clicked += (sender, args) =>
 				{
-					input.Clicked +=
-						(sender, args) =>
-							answer(input.CancelButtonIndex != args.ButtonIndex, textField.Text);
-				}
+				    var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
+				    tcs.TrySetResult(result);
+				};
 				input.Show();
 			});
-		}
+
+	        return tcs.Task;
+	    }
+
 
         public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
         {
