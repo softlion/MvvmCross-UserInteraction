@@ -176,9 +176,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
 		            var input = new EditText(CurrentActivity) {Hint = placeholder, Text = defaultValue };
 	                if (fieldType == FieldType.Email)
-	                    input.InputType = InputTypes.TextVariationEmailAddress;
+	                    input.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
+			        else if (fieldType == FieldType.Integer)
+                        input.InputType = InputTypes.ClassNumber; // | InputTypes.NumberFlagDecimal;
 
-		            new AlertDialog.Builder(CurrentActivity)
+	                new AlertDialog.Builder(CurrentActivity)
 		                .SetMessage(message)
 		                .SetTitle(title)
 		                .SetView(input)

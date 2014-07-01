@@ -10,7 +10,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
     public enum FieldType
     {
         Default,
-        Email
+        Email,
+        Integer
     }
 
 	public interface IUserInteraction

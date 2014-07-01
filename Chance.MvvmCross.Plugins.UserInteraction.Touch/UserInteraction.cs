@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Cirrious.CrossCore;
 using Cirrious.FluentLayouts.Touch;
@@ -120,6 +121,17 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 			    {
 			        if(fieldType == FieldType.Email)
                         textField.KeyboardType = UIKeyboardType.EmailAddress;
+			        else if (fieldType == FieldType.Integer)
+			        {
+			            textField.KeyboardType = UIKeyboardType.NumberPad;
+			            textField.ValueChanged += (sender, args) =>
+			            {
+			                var text = textField.Text;
+			                var newText = Regex.Replace(text, "[^0-9]", "");
+			                if (text != newText)
+			                    textField.Text = newText;
+			            };
+			        }
 			    }
 
 				input.Clicked += (sender, args) =>
