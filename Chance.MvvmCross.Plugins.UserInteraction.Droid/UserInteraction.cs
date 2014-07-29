@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Android.App;
 using Android.Content;
@@ -274,21 +275,96 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        return tcs.Task;	   
         }
 
-	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dismiss"></param>
+        /// <param name="userCanDismiss"></param>
+        /// <param name="title"></param>
+        /// <param name="cancelButton"></param>
+        /// <param name="destroyButton"></param>
+        /// <param name="otherButtons"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Button indexes:
+        /// cancel: 0
+        /// destroy: 1
+        /// others: 2+index
+        /// </remarks>
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
         {
-            throw new NotImplementedException();
-
             var tcs = new TaskCompletionSource<int>();
+
+            Action cancelAction = () => tcs.TrySetResult(0);
 
 	        if (CurrentActivity != null)
 	        {
 	            CurrentActivity.RunOnUiThread(() =>
 	            {
+	                var cancelButtonIndex = -1;
+	                var destructiveButtonIndex = -1;
+
+                    var items = new List<string>();
+	                if (destroyButton != null)
+	                {
+	                    items.Add(destroyButton);
+	                    destructiveButtonIndex = 0;
+	                }
+	                if(otherButtons != null)
+                        items.AddRange(otherButtons);
+	                if (cancelButton != null)
+	                {
+	                    items.Add(cancelButton);
+	                    cancelButtonIndex = items.Count - 1;
+	                }
+
+	                var ad = new AlertDialog.Builder(CurrentActivity)
+                        .SetTitle(title)
+                        .SetItems(items.ToArray(), (s, args) =>
+                        {
+                            var buttonIndex = args.Which;
+                            Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
+
+                            if ((cancelButton != null && buttonIndex == cancelButtonIndex) || buttonIndex < 0)
+                                tcs.TrySetResult(0);
+                            else if (destroyButton != null && buttonIndex == destructiveButtonIndex)
+                                tcs.TrySetResult(1);
+                            else
+                            {
+                                if (destructiveButtonIndex >= 0)
+                                    buttonIndex++;
+                                else
+                                    buttonIndex += 2;
+
+                                tcs.TrySetResult(buttonIndex);
+                            }
+
+                        }).SetInverseBackgroundForced(true)
+                        .SetCancelable(true)
+                        .Create();
+
+	                ad.CancelEvent += (sender, args) =>
+	                {
+                        Mvx.Trace("Dialog cancelled");
+	                    cancelAction();
+	                };
+	                ad.DismissEvent += (sender, args) =>
+	                {
+                        Mvx.Trace("Dialog dismissed");
+	                    cancelAction();
+	                };
+                    ad.Show();
+
+	                dismiss.Register(() =>
+	                {
+	                    ad.Dismiss();
+	                    cancelAction();
+	                });
 	            });
 	        }
 	        else
 	        {
-	            tcs.TrySetResult(-2);
+	            tcs.TrySetResult(0);
 	        }
 
 	        return tcs.Task;	   
@@ -296,11 +372,28 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
         public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
         {
-            throw new NotImplementedException();
-
             var tcs = new TaskCompletionSource<int>();
 
-	        return tcs.Task;	   
+            if (CurrentActivity != null)
+            {
+                CurrentActivity.RunOnUiThread(() =>
+                {
+                    var toast = Android.Widget.Toast.MakeText(CurrentActivity, text, duration == ToastDuration.Short ? ToastLength.Short : ToastLength.Long);
+                    toast.SetGravity((position == ToastPosition.Bottom ? GravityFlags.Bottom : (position == ToastPosition.Top ? GravityFlags.Top : GravityFlags.CenterVertical))|GravityFlags.CenterHorizontal, 0, positionOffset);
+
+                    if (dismiss.HasValue)
+                        dismiss.Value.Register(toast.Cancel);
+                    toast.Show();
+
+                    tcs.TrySetResult(0);
+                });
+            }
+	        else
+	        {
+	            tcs.TrySetResult(0);
+	        }
+
+            return tcs.Task;	   
         }
 
         private static int DpToPixel(float dp)
