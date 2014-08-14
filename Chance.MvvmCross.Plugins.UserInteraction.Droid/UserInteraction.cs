@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Android.App;
 using Android.Content;
+using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.Text;
 using Android.Views;
 using Cirrious.CrossCore;
@@ -233,7 +235,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                    dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
 	                });
 	            }
-	        }, TaskContinuationOptions.NotOnCanceled);
+	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
 	        return cancellationTokenSource.Token;	   
         }
@@ -244,26 +246,36 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
             Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => 
             {
-                if (t.IsCompleted && CurrentActivity != null)
+                if (t.Status == TaskStatus.RanToCompletion && CurrentActivity != null)
                 {
                     CurrentActivity.RunOnUiThread(() =>
                     {
-                        var input = new ProgressBar(CurrentActivity) //, null, Android.Resource.Attribute.ProgressBarStyle)
-                        {
-                            Indeterminate = true,
-                            LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical},
-                        };
+                        var layout = new FrameLayout(CurrentActivity) {LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FillParent,ViewGroup.LayoutParams.FillParent)};
+                        var input = new ProgressBar(CurrentActivity) { Indeterminate = true, LayoutParameters = new FrameLayout.LayoutParams(DpToPixel(100), DpToPixel(100)) {Gravity = GravityFlags.Center}};
+                        layout.AddView(input);
 
-                        var dialog = new AlertDialog.Builder(CurrentActivity)
+                        /*var dialog = new AlertDialog.Builder(CurrentActivity)
                             .SetView(input)
-                            .SetCancelable(false);
+                            .SetCancelable(false)
+                            .Create();*/
 
-                        dialog.SetOnCancelListener(new DialogCancelledListener(() => tcs.TrySetResult(0)));
+                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBarFullScreen); //ThemeTranslucentNoTitleBarFullScreen
+                        dialog.SetContentView(layout);
+                        dialog.SetCancelable(false);
+                        //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);
+                        dialog.DismissEvent += (sender, args) => tcs.TrySetResult(0);
 
-                        var dlg = dialog.Show();
+                        //Make translucent. ThemeTranslucentNoTitleBarFullScreen does not work on wiko.
+                        dialog.Window.SetBackgroundDrawable(new ColorDrawable(Color.Argb(175,255,255,255))); 
+                        dialog.Show();
+
                         dismiss.Register(() =>
                         {
-                            CurrentActivity.RunOnUiThread(dlg.Dismiss);
+                            CurrentActivity.RunOnUiThread(() =>
+                            {
+                                if(dialog.IsShowing)
+                                    dialog.Dismiss();
+                            });
                             tcs.TrySetResult(0);
                         });
                     });
