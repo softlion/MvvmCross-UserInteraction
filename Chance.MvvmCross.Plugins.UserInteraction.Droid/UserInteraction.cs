@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Android.App;
 using Android.Content;
+using Android.Content.Res;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Text;
@@ -11,6 +12,7 @@ using Cirrious.CrossCore;
 using Android.Widget;
 using Cirrious.CrossCore.Droid.Platform;
 using System.Threading.Tasks;
+using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 {
@@ -183,7 +185,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 			        else if (fieldType == FieldType.Integer)
                         input.InputType = InputTypes.ClassNumber; // | InputTypes.NumberFlagDecimal;
 
-	                new AlertDialog.Builder(CurrentActivity)
+	                var dialog = new AlertDialog.Builder(CurrentActivity)
 		                .SetMessage(message)
 		                .SetTitle(title)
 		                .SetView(input)
@@ -195,7 +197,22 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		                {
 		                    tcs.TrySetResult(null);
 		                })
-		                .Show();
+                        .Create();
+
+	                if (CurrentActivity.Resources.Configuration.Keyboard == KeyboardType.Nokeys
+	                    || CurrentActivity.Resources.Configuration.Keyboard == KeyboardType.Undefined
+	                    || CurrentActivity.Resources.Configuration.HardKeyboardHidden == HardKeyboardHidden.Yes)
+	                {
+	                    //Show keyboard when input has focus
+	                    input.FocusChange += (sender, args) =>
+	                    {
+	                        if (args.HasFocus)
+	                            dialog.Window.SetSoftInputMode(SoftInput.StateVisible);
+	                    };
+	                }
+
+	                dialog.Show();
+
 	            });
 	        }
 	        else
@@ -259,7 +276,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                             .SetCancelable(false)
                             .Create();*/
 
-                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBarFullScreen); //ThemeTranslucentNoTitleBarFullScreen
+                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBarFullScreen); //Theme_Translucent
                         dialog.SetContentView(layout);
                         dialog.SetCancelable(false);
                         //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);
