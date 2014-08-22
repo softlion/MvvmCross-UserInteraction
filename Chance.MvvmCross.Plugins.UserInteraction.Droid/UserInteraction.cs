@@ -7,11 +7,13 @@ using Android.Content.Res;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Text;
+using Android.Util;
 using Android.Views;
 using Cirrious.CrossCore;
 using Android.Widget;
 using Cirrious.CrossCore.Droid.Platform;
 using System.Threading.Tasks;
+using Cirrious.CrossCore.Exceptions;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
@@ -290,8 +292,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                         {
                             CurrentActivity.RunOnUiThread(() =>
                             {
-                                if(dialog.IsShowing)
-                                    dialog.Dismiss();
+                                if (dialog.IsShowing)
+                                {
+                                    try
+                                    {
+                                        dialog.Dismiss();
+                                    }
+                                    catch (Exception)
+                                    {
+                                        //Dialog dismissed
+                                        Mvx.Trace("Exception while dismissing dialog, is the activity hidden before the dialog has been dismissed ?");
+                                    }
+                                }
                             });
                             tcs.TrySetResult(0);
                         });
