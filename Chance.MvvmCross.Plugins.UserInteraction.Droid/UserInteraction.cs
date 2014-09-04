@@ -278,7 +278,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                             .SetCancelable(false)
                             .Create();*/
 
-                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBarFullScreen); //Theme_Translucent
+                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
                         dialog.SetContentView(layout);
                         dialog.SetCancelable(false);
                         //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);
