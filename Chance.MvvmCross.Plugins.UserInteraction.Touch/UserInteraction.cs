@@ -8,6 +8,7 @@ using Cirrious.CrossCore;
 using Cirrious.FluentLayouts.Touch;
 using MonoTouch.AVFoundation;
 using MonoTouch.CoreGraphics;
+using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using System.Threading.Tasks;
 
@@ -109,37 +110,69 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	    {
 	        var tcs = new TaskCompletionSource<string>();
 
+	        Action<UITextField> configureTextField = textField =>
+	        {
+	            if (placeholder != null)
+	                textField.Placeholder = placeholder;
+	            if (defaultValue != null)
+	                textField.Text = defaultValue;
+	            if (fieldType != FieldType.Default)
+	            {
+	                if (fieldType == FieldType.Email)
+	                    textField.KeyboardType = UIKeyboardType.EmailAddress;
+	                else if (fieldType == FieldType.Integer)
+	                {
+	                    textField.KeyboardType = UIKeyboardType.NumberPad;
+	                    textField.ValueChanged += (sender, args) =>
+	                    {
+	                        var text = textField.Text;
+	                        var newText = Regex.Replace(text, "[^0-9]", "");
+	                        if (text != newText)
+	                            textField.Text = newText;
+	                    };
+	                }
+	            }
+	        };
+
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-				var input = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
-			    var textField = input.GetTextField(0);
-                if(placeholder != null)
-				    textField.Placeholder = placeholder;
-                if(defaultValue != null)
-			        textField.Text = defaultValue;
-			    if (fieldType != FieldType.Default)
+			    if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
 			    {
-			        if(fieldType == FieldType.Email)
-                        textField.KeyboardType = UIKeyboardType.EmailAddress;
-			        else if (fieldType == FieldType.Integer)
-			        {
-			            textField.KeyboardType = UIKeyboardType.NumberPad;
-			            textField.ValueChanged += (sender, args) =>
-			            {
-			                var text = textField.Text;
-			                var newText = Regex.Replace(text, "[^0-9]", "");
-			                if (text != newText)
-			                    textField.Text = newText;
-			            };
-			        }
+			        var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
+                    alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text) ));
+                    alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null) ));
+                    alert.AddTextField(configureTextField);
+                    var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+                    if (currentView != null && currentView.RootViewController != null)
+                        currentView.RootViewController.PresentViewController(alert, true, null);
+                    else
+                        Mvx.Warning("Input: no window/nav controller on which to display");
 			    }
+			    else
+			    {
+			        var input = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
+			        var textField = input.GetTextField(0);
+			        configureTextField(textField);
 
-				input.Clicked += (sender, args) =>
-				{
-				    var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
-				    tcs.TrySetResult(result);
-				};
-				input.Show();
+			        //hack alert: fix bug in iOS 8 that prevents keyboard from poping up
+                    //Works, but alert stays below the keyboard ... it does not move up.
+                    //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
+                    //{
+                    //    input.Presented += (sender, args) =>
+                    //    {
+                    //        var textRange = textField.SelectedTextRange;
+                    //        textField.SelectAll(input);
+                    //        textField.SelectedTextRange = textRange;
+                    //    };
+                    //}
+
+			        input.Clicked += (sender, args) =>
+			        {
+			            var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
+			            tcs.TrySetResult(result);
+			        };
+			        input.Show();
+			    }
 			});
 
 	        return tcs.Task;
