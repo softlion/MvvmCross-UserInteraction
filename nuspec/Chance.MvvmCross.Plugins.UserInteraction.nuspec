@@ -32,6 +32,7 @@
 		<!-- touch -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\MonoTouch\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\MonoTouch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
+		<file src="..\bin\Release\Touch\Cirrious.FluentLayouts.Touch.dll" target="lib\MonoTouch\Cirrious.FluentLayouts.Touch.dll" />
         <file src="TouchBootstrapContent\UserInteractionPluginBootstrap.cs.pp" target="content\MonoTouch\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
 		
 	</files>
