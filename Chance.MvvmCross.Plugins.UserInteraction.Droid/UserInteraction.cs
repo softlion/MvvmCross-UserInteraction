@@ -35,37 +35,37 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         public uint DefaultColor { set {} }
 
 
-		public void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel")
-		{
-			Confirm(message, confirmed => {
-				if (confirmed)
-					okClicked();
-			},
-			title, okButton, cancelButton);
-		}
+        //public void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+        //{
+        //    Confirm(message, confirmed => {
+        //        if (confirmed)
+        //            okClicked();
+        //    },
+        //    title, okButton, cancelButton);
+        //}
 
-		public void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel")
-		{
-			//Mvx.Resolve<IMvxMainThreadDispatcher>().RequestMainThreadAction();
-		    if (CurrentActivity != null)
-		    {
-		        CurrentActivity.RunOnUiThread(() => 
-                    new AlertDialog.Builder(CurrentActivity)
-		            .SetMessage(message)
-		            .SetTitle(title)
-		            .SetPositiveButton(okButton, delegate
-		            {
-		                if (answer != null)
-		                    answer(true);
-		            })
-		            .SetNegativeButton(cancelButton, delegate
-		            {
-		                if (answer != null)
-		                    answer(false);
-		            })
-		            .Show());
-		    }
-		}
+        //public void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+        //{
+        //    //Mvx.Resolve<IMvxMainThreadDispatcher>().RequestMainThreadAction();
+        //    if (CurrentActivity != null)
+        //    {
+        //        CurrentActivity.RunOnUiThread(() => 
+        //            new AlertDialog.Builder(CurrentActivity)
+        //            .SetMessage(message)
+        //            .SetTitle(title)
+        //            .SetPositiveButton(okButton, delegate
+        //            {
+        //                if (answer != null)
+        //                    answer(true);
+        //            })
+        //            .SetNegativeButton(cancelButton, delegate
+        //            {
+        //                if (answer != null)
+        //                    answer(false);
+        //            })
+        //            .Show());
+        //    }
+        //}
 
         public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
 		{
@@ -123,24 +123,24 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        }
 	    }
 
-	    public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
-		{
-            if (CurrentActivity != null)
-            {
-                CurrentActivity.RunOnUiThread(() =>
-                {
-                    new AlertDialog.Builder(CurrentActivity)
-                        .SetMessage(message)
-                        .SetTitle(title)
-                        .SetPositiveButton(okButton, (s,e) =>
-                        {
-                            if (done != null)
-                                done();
-                        })
-                        .Show();
-                });
-            }
-        }
+        //public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
+        //{
+        //    if (CurrentActivity != null)
+        //    {
+        //        CurrentActivity.RunOnUiThread(() =>
+        //        {
+        //            new AlertDialog.Builder(CurrentActivity)
+        //                .SetMessage(message)
+        //                .SetTitle(title)
+        //                .SetPositiveButton(okButton, (s,e) =>
+        //                {
+        //                    if (done != null)
+        //                        done();
+        //                })
+        //                .Show();
+        //        });
+        //    }
+        //}
 
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{

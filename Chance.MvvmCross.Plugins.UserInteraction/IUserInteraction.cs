@@ -21,11 +21,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
         /// </summary>
 	    uint DefaultColor { set; }
 
-	    void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel");
-		void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel");
+        //void Confirm(string message, Action okClicked, string title = null, string okButton = "OK", string cancelButton = "Cancel");
+        //void Confirm(string message, Action<bool> answer, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 		Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel");
 
-		void Alert(string message, Action done = null, string title = "", string okButton = "OK");
+        //void Alert(string message, Action done = null, string title = "", string okButton = "OK");
 		Task Alert(string message, string title = "", string okButton = "OK");
 
 	    Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default);

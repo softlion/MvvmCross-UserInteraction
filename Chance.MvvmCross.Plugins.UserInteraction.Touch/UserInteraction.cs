@@ -24,26 +24,26 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
             return new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
         }
 
-		public void Confirm(string message, Action okClicked, string title = "", string okButton = "OK", string cancelButton = "Cancel")
-		{
-			Confirm(message, confirmed =>
-			{
-				if (confirmed)
-					okClicked();
-			},
-			title, okButton, cancelButton);
-		}
+        //public void Confirm(string message, Action okClicked, string title = "", string okButton = "OK", string cancelButton = "Cancel")
+        //{
+        //    Confirm(message, confirmed =>
+        //    {
+        //        if (confirmed)
+        //            okClicked();
+        //    },
+        //    title, okButton, cancelButton);
+        //}
 
-		public void Confirm(string message, Action<bool> answer, string title = "", string okButton = "OK", string cancelButton = "Cancel")
-		{
-			UIApplication.SharedApplication.InvokeOnMainThread(() =>
-			{
-				var confirm = new UIAlertView(title ?? string.Empty, message,null, cancelButton, okButton);
-				if (answer != null)
-					confirm.Clicked += (sender, args) => answer(confirm.CancelButtonIndex != args.ButtonIndex);
-				confirm.Show();
-			});
-		}
+        //public void Confirm(string message, Action<bool> answer, string title = "", string okButton = "OK", string cancelButton = "Cancel")
+        //{
+        //    UIApplication.SharedApplication.InvokeOnMainThread(() =>
+        //    {
+        //        var confirm = new UIAlertView(title ?? string.Empty, message,null, cancelButton, okButton);
+        //        if (answer != null)
+        //            confirm.Clicked += (sender, args) => answer(confirm.CancelButtonIndex != args.ButtonIndex);
+        //        confirm.Show();
+        //    });
+        //}
 
 		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
 		{
@@ -80,19 +80,19 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
             });
         }
 
-		public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
-		{
-			UIApplication.SharedApplication.InvokeOnMainThread(() =>
-			{
-				var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
-				if (done != null)
-				{
-					alert.Clicked += (sender, args) => done();
-				}
-				alert.Show();
-			});
+        //public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
+        //{
+        //    UIApplication.SharedApplication.InvokeOnMainThread(() =>
+        //    {
+        //        var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
+        //        if (done != null)
+        //        {
+        //            alert.Clicked += (sender, args) => done();
+        //        }
+        //        alert.Show();
+        //    });
 
-		}
+        //}
 
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{
