@@ -1,15 +1,11 @@
 using System;
-using System.Drawing;
+using Cirrious.FluentLayouts.Touch;
+using CoreGraphics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cirrious.CrossCore;
-using Cirrious.FluentLayouts.Touch;
-using MonoTouch.AVFoundation;
-using MonoTouch.CoreGraphics;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using UIKit;
 using System.Threading.Tasks;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
@@ -241,7 +237,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
                             waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
                             waitView.AddConstraints(
-                                overlay.AtTopLeftOf(waitView),
+                                overlay.AtTopOf(waitView),
+                                overlay.AtLeftOf(waitView),
                                 overlay.AtBottomOf(waitView),
                                 overlay.AtRightOf(waitView),
 
@@ -253,7 +250,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
                             waitView.TranslatesAutoresizingMaskIntoConstraints = false;
                             currentView.AddConstraints(
-                                waitView.AtTopLeftOf(currentView),
+                                waitView.AtTopOf(currentView),
+                                waitView.AtLeftOf(currentView),
                                 waitView.AtRightOf(currentView),
                                 waitView.AtBottomOf(currentView)
                                 );
@@ -330,7 +328,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	            if (currentView != null)
 	            {
 	                //Show from bottom
-	                actionSheet.ShowFrom(new RectangleF(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+	                actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
 	            }
 	            else
 	            {

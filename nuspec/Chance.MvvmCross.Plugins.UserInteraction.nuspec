@@ -11,12 +11,17 @@
 		<description>This package contains a 'UserInteraction' plugin for MvvmCross v3</description>
 		<tags>mvvm mvvmcross xamarin monodroid monotouch wpf wp wpdev windowsphone</tags>
 		<dependencies>
-		  <dependency id="MvvmCross.HotTuna.CrossCore" version="3.0.14" />
-		</dependencies>
+      <group>
+        <dependency id="MvvmCross.HotTuna.CrossCore" version="3.5.0" />
+      </group>
+      <group targetFramework="Xamarin.iOS10">
+        <dependency id="Cirrious.FluentLayout" version="2.0.0" />
+      </group>
+    </dependencies>
 	</metadata>
 	<files>		
 		<!-- PCL -->
-		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\portable-win+net45+MonoAndroid+MonoTouch+sl50+wp8\Chance.MvvmCross.Plugins.UserInteraction.dll" />
+		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\portable-net45+win+wpa81+wp80\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 
 		<!-- phone - not supported
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\sl4-wp71\Chance.MvvmCross.Plugins.UserInteraction.dll" />
@@ -30,9 +35,8 @@
         <file src="BootstrapContent\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
 		
 		<!-- touch -->
-		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\MonoTouch\Chance.MvvmCross.Plugins.UserInteraction.dll" />
-		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\MonoTouch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
-		<file src="..\bin\Release\Touch\Cirrious.FluentLayouts.Touch.dll" target="lib\MonoTouch\Cirrious.FluentLayouts.Touch.dll" />
+		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
+		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
         <file src="TouchBootstrapContent\UserInteractionPluginBootstrap.cs.pp" target="content\MonoTouch\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
 		
 	</files>
