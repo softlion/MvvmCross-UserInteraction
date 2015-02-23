@@ -328,7 +328,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         /// <returns></returns>
         /// <remarks>
         /// Button indexes:
-        /// cancel: 0
+        /// cancel: 0 (never displayed on Android. Use hardware back button instead)
         /// destroy: 1
         /// others: 2+index
         /// </remarks>
@@ -353,18 +353,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                }
 	                if(otherButtons != null)
                         items.AddRange(otherButtons);
-	                if (cancelButton != null)
-	                {
-	                    items.Add(cancelButton);
-	                    cancelButtonIndex = items.Count - 1;
-	                }
+	                //if (cancelButton != null)
+	                //{
+	                    //items.Add(cancelButton);
+	                    //cancelButtonIndex = items.Count - 1;
+	                //}
 
 	                var ad = new AlertDialog.Builder(CurrentActivity)
                         .SetTitle(title)
                         .SetItems(items.ToArray(), (s, args) =>
                         {
                             var buttonIndex = args.Which;
-                            Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
+                            //Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
 
                             if ((cancelButton != null && buttonIndex == cancelButtonIndex) || buttonIndex < 0)
                                 tcs.TrySetResult(0);
@@ -386,12 +386,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
 	                ad.CancelEvent += (sender, args) =>
 	                {
-                        Mvx.Trace("Dialog cancelled");
+                        //Mvx.Trace("Dialog cancelled");
 	                    cancelAction();
 	                };
 	                ad.DismissEvent += (sender, args) =>
 	                {
-                        Mvx.Trace("Dialog dismissed");
+                        //Mvx.Trace("Dialog dismissed");
 	                    cancelAction();
 	                };
                     ad.Show();
