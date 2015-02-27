@@ -246,12 +246,14 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                        .SetMessage(message)
 	                        .SetTitle(title)
 	                        .SetView(input)
-	                        .SetCancelable(userCanDismiss);
+	                        .SetCancelable(userCanDismiss)
+                            .SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel))
+                            .Create();
+                        dialog.SetCanceledOnTouchOutside(userCanDismiss);
+                        //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
 
-	                    dialog.SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel));
-
-	                    var dlg = dialog.Show();
-	                    dismiss.Register(() => CurrentActivity.RunOnUiThread(dlg.Dismiss));
+	                    dialog.Show();
+	                    dismiss.Register(() => CurrentActivity.RunOnUiThread(dialog.Dismiss));
 	                });
 	            }
 	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
@@ -381,8 +383,9 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                             }
 
                         }).SetInverseBackgroundForced(true)
-                        .SetCancelable(true)
+                        .SetCancelable(userCanDismiss)
                         .Create();
+                    ad.SetCanceledOnTouchOutside(userCanDismiss);
 
 	                ad.CancelEvent += (sender, args) =>
 	                {
