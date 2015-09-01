@@ -7,13 +7,11 @@ using Android.Content.Res;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Text;
-using Android.Util;
 using Android.Views;
 using Cirrious.CrossCore;
 using Android.Widget;
 using Cirrious.CrossCore.Droid.Platform;
 using System.Threading.Tasks;
-using Cirrious.CrossCore.Exceptions;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
@@ -362,7 +360,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                //}
 
 	                var ad = new AlertDialog.Builder(CurrentActivity)
-                        .SetTitle(title)
+                        .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
                         .SetItems(items.ToArray(), (s, args) =>
                         {
                             var buttonIndex = args.Which;
