@@ -4,9 +4,9 @@ using CoreGraphics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using Cirrious.CrossCore;
 using UIKit;
 using System.Threading.Tasks;
+using MvvmCross.Platform;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 {

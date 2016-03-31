@@ -1,11 +1,7 @@
-using Cirrious.CrossCore.Plugins;
+using MvvmCross.Platform.Plugins;
 
-namespace <YourNamespace>.Bootstrap
+namespace $rootnamespace$.Bootstrap
 {
 	public class UserInteractionPluginBootstrap 
-		: MvxLoaderPluginBootstrapAction<Chance.MvvmCross.Plugins.UserInteraction.PluginLoader>
-
-	{
-	}
+		: MvxPluginBootstrapAction<Chance.MvvmCross.Plugins.UserInteraction.PluginLoader> { }
 }
-

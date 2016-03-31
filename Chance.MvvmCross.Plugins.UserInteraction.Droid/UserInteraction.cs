@@ -8,10 +8,10 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Text;
 using Android.Views;
-using Cirrious.CrossCore;
 using Android.Widget;
-using Cirrious.CrossCore.Droid.Platform;
 using System.Threading.Tasks;
+using MvvmCross.Platform;
+using MvvmCross.Platform.Droid.Platform;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
@@ -269,7 +269,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                 {
                     CurrentActivity.RunOnUiThread(() =>
                     {
-                        var layout = new FrameLayout(CurrentActivity) {LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FillParent,ViewGroup.LayoutParams.FillParent)};
+                        var layout = new FrameLayout(CurrentActivity) {LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent,ViewGroup.LayoutParams.MatchParent) };
                         var input = new ProgressBar(CurrentActivity) { Indeterminate = true, LayoutParameters = new FrameLayout.LayoutParams(DpToPixel(100), DpToPixel(100)) {Gravity = GravityFlags.Center}};
                         layout.AddView(input);
 
