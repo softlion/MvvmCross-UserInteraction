@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Android.App;
 using Android.Content;
@@ -317,14 +318,16 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         }
 
         /// <summary>
-        /// 
+        /// Displays a system menu.
+        /// If otherButtons is null, the indexes are still incremented, but the button won't appear. 
+        /// This enables easy scenario where the otherButtons array is changing between calls.
         /// </summary>
         /// <param name="dismiss"></param>
         /// <param name="userCanDismiss"></param>
         /// <param name="title"></param>
         /// <param name="cancelButton"></param>
         /// <param name="destroyButton"></param>
-        /// <param name="otherButtons"></param>
+        /// <param name="otherButtons">If a button is null, the index are still incremented, but the button won't appear</param>
         /// <returns></returns>
         /// <remarks>
         /// Button indexes:
@@ -361,7 +364,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
 	                var ad = new AlertDialog.Builder(CurrentActivity)
                         .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
-                        .SetItems(items.ToArray(), (s, args) =>
+                        .SetItems(items.Where(b => b!=null).ToArray(), (s, args) =>
                         {
                             var buttonIndex = args.Which;
                             //Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
@@ -377,7 +380,16 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                                 else
                                     buttonIndex += 2;
 
-                                tcs.TrySetResult(buttonIndex);
+                                //Correct the index given the number of holes
+                                var n = buttonIndex-2;
+                                var realIndex = 0;
+                                while (n != 0)
+                                {
+                                    if (items[realIndex++] != null)
+                                        n--;
+                                }
+
+                                tcs.TrySetResult(2+ realIndex);
                             }
 
                         }).SetInverseBackgroundForced(true)

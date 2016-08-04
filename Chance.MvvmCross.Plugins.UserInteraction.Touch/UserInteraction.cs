@@ -282,20 +282,24 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
 
         /// <summary>
-        /// 
+        /// Displays a system menu.
+        /// If otherButtons is null, the indexes are still incremented, but the button won't appear. 
+        /// This enables easy scenario where the otherButtons array is changing between calls.
         /// </summary>
         /// <param name="dismiss"></param>
         /// <param name="userCanDismiss"></param>
         /// <param name="title"></param>
         /// <param name="cancelButton"></param>
         /// <param name="destroyButton"></param>
-        /// <param name="otherButtons"></param>
+        /// <param name="otherButtons">If a button is null, the index are still incremented, but the button won't appear</param>
         /// <returns></returns>
         /// <remarks>
         /// Button indexes:
         /// cancel: 0
         /// destroy: 1
         /// others: 2+index
+        /// 
+        /// 
         /// </remarks>
 	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
         {
@@ -303,7 +307,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
 	        {
-	            var actionSheet = new UIActionSheet(title, null, cancelButton, destroyButton, otherButtons);
+	            var actionSheet = new UIActionSheet(title, null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
 	            dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
 
 	            actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);
