@@ -24,11 +24,9 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
     /// </summary>
 	public class UserInteraction : IUserInteraction
 	{
-		protected Activity CurrentActivity {
-			get { return Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity; }
-		}
+		protected Activity CurrentActivity => Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity;
 
-        /// <summary>
+	    /// <summary>
         /// Not used. In android use global styles instead.
         /// </summary>
         public uint DefaultColor { set {} }
@@ -69,10 +67,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
 		{
 		    var tcs = new TaskCompletionSource<bool>();
-		    if (CurrentActivity != null)
+		    var activity = CurrentActivity;
+            if (activity != null)
 		    {
-		        CurrentActivity.RunOnUiThread(() => 
-                    new AlertDialog.Builder(CurrentActivity)
+                activity.RunOnUiThread(() => 
+                    new AlertDialog.Builder(activity)
 		            .SetMessage(message)
 		            .SetTitle(title)
 		            .SetPositiveButton(okButton, delegate
@@ -95,11 +94,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    public void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe")
 	    {
-	        if (CurrentActivity != null)
+	        var activity = CurrentActivity;
+            if (activity != null)
 	        {
-	            CurrentActivity.RunOnUiThread(() =>
+                activity.RunOnUiThread(() =>
 	            {
-	                new AlertDialog.Builder(CurrentActivity)
+	                new AlertDialog.Builder(activity)
 	                    .SetMessage(message)
 	                    .SetTitle(title)
 	                    .SetPositiveButton(positive, delegate
@@ -144,11 +144,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{
             var tcs = new TaskCompletionSource<object>();
-            if (CurrentActivity != null)
+		    var activity = CurrentActivity;
+            if (activity != null)
             {
-                CurrentActivity.RunOnUiThread(() =>
+                activity.RunOnUiThread(() =>
                 {
-                    new AlertDialog.Builder(CurrentActivity)
+                    new AlertDialog.Builder(activity)
                         .SetMessage(message)
                         .SetTitle(title)
                         .SetPositiveButton(okButton, (s,e) =>
@@ -170,23 +171,25 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    {
 	        var tcs = new TaskCompletionSource<string>();
 
-	        if (CurrentActivity != null)
+	        var activity = CurrentActivity;
+
+            if (activity != null)
 	        {
-	            CurrentActivity.RunOnUiThread(() =>
+                activity.RunOnUiThread(() =>
 	            {
-	                if (CurrentActivity == null)
+	                if (activity == null)
 	                {
         	            tcs.TrySetCanceled();
 	                    return;
 	                }
 
-		            var input = new EditText(CurrentActivity) {Hint = placeholder, Text = defaultValue };
+		            var input = new EditText(activity) {Hint = placeholder, Text = defaultValue };
 	                if (fieldType == FieldType.Email)
 	                    input.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
 			        else if (fieldType == FieldType.Integer)
                         input.InputType = InputTypes.ClassNumber; // | InputTypes.NumberFlagDecimal;
 
-	                var dialog = new AlertDialog.Builder(CurrentActivity)
+	                var dialog = new AlertDialog.Builder(activity)
 		                .SetMessage(message)
 		                .SetTitle(title)
 		                .SetView(input)
@@ -200,9 +203,9 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		                })
                         .Create();
 
-	                if (CurrentActivity.Resources.Configuration.Keyboard == KeyboardType.Nokeys
-	                    || CurrentActivity.Resources.Configuration.Keyboard == KeyboardType.Undefined
-	                    || CurrentActivity.Resources.Configuration.HardKeyboardHidden == HardKeyboardHidden.Yes)
+	                if (activity.Resources.Configuration.Keyboard == KeyboardType.Nokeys
+	                    || activity.Resources.Configuration.Keyboard == KeyboardType.Undefined
+	                    || activity.Resources.Configuration.HardKeyboardHidden == HardKeyboardHidden.Yes)
 	                {
 	                    //Show keyboard when input has focus
 	                    input.FocusChange += (sender, args) =>
@@ -231,17 +234,19 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
 	        Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t =>
 	        {
-	            if (CurrentActivity != null)
+	            var activity = CurrentActivity;
+
+                if (activity != null)
 	            {
-	                CurrentActivity.RunOnUiThread(() =>
+                    activity.RunOnUiThread(() =>
 	                {
-	                    var input = new ProgressBar(CurrentActivity, null, Android.Resource.Attribute.ProgressBarStyle)
+	                    var input = new ProgressBar(activity, null, Android.Resource.Attribute.ProgressBarStyle)
 	                    {
 	                        Indeterminate = true,
 	                        LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
 	                    };
 
-	                    var dialog = new AlertDialog.Builder(CurrentActivity)
+	                    var dialog = new AlertDialog.Builder(activity)
 	                        .SetMessage(message)
 	                        .SetTitle(title)
 	                        .SetView(input)
@@ -252,7 +257,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                         //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
 
 	                    dialog.Show();
-	                    dismiss.Register(() => CurrentActivity.RunOnUiThread(dialog.Dismiss));
+	                    dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
 	                });
 	            }
 	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
@@ -264,22 +269,23 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         {
             var tcs = new TaskCompletionSource<int>();
 
-            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t => 
+            Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t =>
             {
-                if (t.Status == TaskStatus.RanToCompletion && CurrentActivity != null)
+                var activity = CurrentActivity;
+                if (t.Status == TaskStatus.RanToCompletion && activity != null)
                 {
-                    CurrentActivity.RunOnUiThread(() =>
+                    activity.RunOnUiThread(() =>
                     {
-                        var layout = new FrameLayout(CurrentActivity) {LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent,ViewGroup.LayoutParams.MatchParent) };
-                        var input = new ProgressBar(CurrentActivity) { Indeterminate = true, LayoutParameters = new FrameLayout.LayoutParams(DpToPixel(100), DpToPixel(100)) {Gravity = GravityFlags.Center}};
+                        var layout = new FrameLayout(activity) {LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent,ViewGroup.LayoutParams.MatchParent) };
+                        var input = new ProgressBar(activity) { Indeterminate = true, LayoutParameters = new FrameLayout.LayoutParams(DpToPixel(100), DpToPixel(100)) {Gravity = GravityFlags.Center}};
                         layout.AddView(input);
 
-                        /*var dialog = new AlertDialog.Builder(CurrentActivity)
+                        /*var dialog = new AlertDialog.Builder(activity)
                             .SetView(input)
                             .SetCancelable(false)
                             .Create();*/
 
-                        var dialog = new Dialog(CurrentActivity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
+                        var dialog = new Dialog(activity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
                         dialog.SetContentView(layout);
                         dialog.SetCancelable(false);
                         //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);
@@ -291,7 +297,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
                         dismiss.Register(() =>
                         {
-                            CurrentActivity.RunOnUiThread(() =>
+                            activity.RunOnUiThread(() =>
                             {
                                 if (dialog.IsShowing)
                                 {
@@ -341,9 +347,10 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
             Action cancelAction = () => tcs.TrySetResult(0);
 
-	        if (CurrentActivity != null)
+            var activity = CurrentActivity;
+            if (activity != null)
 	        {
-	            CurrentActivity.RunOnUiThread(() =>
+                activity.RunOnUiThread(() =>
 	            {
 	                var cancelButtonIndex = -1;
 	                var destructiveButtonIndex = -1;
@@ -362,7 +369,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                    //cancelButtonIndex = items.Count - 1;
 	                //}
 
-	                var ad = new AlertDialog.Builder(CurrentActivity)
+	                var ad = new AlertDialog.Builder(activity)
                         .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
                         .SetItems(items.Where(b => b!=null).ToArray(), (s, args) =>
                         {
@@ -428,11 +435,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         {
             var tcs = new TaskCompletionSource<int>();
 
-            if (CurrentActivity != null)
+            var activity = CurrentActivity;
+            if (activity != null)
             {
-                CurrentActivity.RunOnUiThread(() =>
+                activity.RunOnUiThread(() =>
                 {
-                    var toast = Android.Widget.Toast.MakeText(CurrentActivity, text, duration == ToastDuration.Short ? ToastLength.Short : ToastLength.Long);
+                    var toast = Android.Widget.Toast.MakeText(activity, text, duration == ToastDuration.Short ? ToastLength.Short : ToastLength.Long);
                     toast.SetGravity((position == ToastPosition.Bottom ? GravityFlags.Bottom : (position == ToastPosition.Top ? GravityFlags.Top : GravityFlags.CenterVertical))|GravityFlags.CenterHorizontal, 0, positionOffset);
 
                     if (dismiss.HasValue)
