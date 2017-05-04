@@ -41,14 +41,20 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
         //    });
         //}
 
-		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
 		{
 		    var tcs = new TaskCompletionSource<bool>();
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-				var confirm = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton);
+				var confirm = new UIAlertView(title ?? string.Empty, message, (IUIAlertViewDelegate)null, cancelButton, okButton);
 				confirm.Clicked += (sender, args) => tcs.TrySetResult(confirm.CancelButtonIndex != args.ButtonIndex);
 				confirm.Show();
+
+			    dismiss?.Register(() =>
+			    {
+			        if(confirm.Visible)
+			            confirm.DismissWithClickedButtonIndex(0, true);
+			    });
 			});
 		    return tcs.Task;
 		}
@@ -57,7 +63,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
         {
             UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-                var confirm = new UIAlertView(title ?? string.Empty, message, null, negative, positive, neutral);
+                var confirm = new UIAlertView(title ?? string.Empty, message, (IUIAlertViewDelegate)null, negative, positive, neutral);
                 if (answer != null)
                 {
                     confirm.Clicked +=
@@ -95,7 +101,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 		    var tcs = new TaskCompletionSource<bool>();
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-				var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
+				var alert = new UIAlertView(title ?? string.Empty, message, (IUIAlertViewDelegate)null, okButton);
 				alert.Clicked += (sender, args) => tcs.TrySetResult(true);
 				alert.Show();
 			});
@@ -132,8 +138,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
 			UIApplication.SharedApplication.InvokeOnMainThread(() =>
 			{
-			    if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
-			    {
+			    //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
+			    //{
 			        var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
                     alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text) ));
                     alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null) ));
@@ -143,32 +149,32 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                         currentView.RootViewController.PresentViewController(alert, true, null);
                     else
                         Mvx.Warning("Input: no window/nav controller on which to display");
-			    }
-			    else
-			    {
-			        var input = new UIAlertView(title ?? string.Empty, message, null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
-			        var textField = input.GetTextField(0);
-			        configureTextField(textField);
+			    //}
+			    //else
+			    //{
+			    //    var input = new UIAlertView(title ?? string.Empty, message, (IUIAlertViewDelegate)null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
+			    //    var textField = input.GetTextField(0);
+			    //    configureTextField(textField);
 
-			        //hack alert: fix bug in iOS 8 that prevents keyboard from poping up
-                    //Works, but alert stays below the keyboard ... it does not move up.
-                    //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
-                    //{
-                    //    input.Presented += (sender, args) =>
-                    //    {
-                    //        var textRange = textField.SelectedTextRange;
-                    //        textField.SelectAll(input);
-                    //        textField.SelectedTextRange = textRange;
-                    //    };
-                    //}
+			    //    //hack alert: fix bug in iOS 8 that prevents keyboard from poping up
+       //             //Works, but alert stays below the keyboard ... it does not move up.
+       //             //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
+       //             //{
+       //             //    input.Presented += (sender, args) =>
+       //             //    {
+       //             //        var textRange = textField.SelectedTextRange;
+       //             //        textField.SelectAll(input);
+       //             //        textField.SelectedTextRange = textRange;
+       //             //    };
+       //             //}
 
-			        input.Clicked += (sender, args) =>
-			        {
-			            var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
-			            tcs.TrySetResult(result);
-			        };
-			        input.Show();
-			    }
+			    //    input.Clicked += (sender, args) =>
+			    //    {
+			    //        var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
+			    //        tcs.TrySetResult(result);
+			    //    };
+			    //    input.Show();
+			    //}
 			});
 
 	        return tcs.Task;
@@ -307,7 +313,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
 	        {
-	            var actionSheet = new UIActionSheet(title, null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
+	            var actionSheet = new UIActionSheet(title, (IUIActionSheetDelegate)null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
 	            dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
 
 	            actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);

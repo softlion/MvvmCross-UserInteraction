@@ -64,26 +64,36 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
         //    }
         //}
 
-        public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel")
+        public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
 		{
 		    var tcs = new TaskCompletionSource<bool>();
 		    var activity = CurrentActivity;
             if (activity != null)
 		    {
-                activity.RunOnUiThread(() => 
-                    new AlertDialog.Builder(activity)
-		            .SetMessage(message)
-		            .SetTitle(title)
-		            .SetPositiveButton(okButton, delegate
-		            {
-		                tcs.TrySetResult(true);
-		            })
-		            .SetNegativeButton(cancelButton, delegate
-		            {
-		                tcs.TrySetResult(false);
-		            })
-		            .Show());
-		    }
+                activity.RunOnUiThread(() =>
+                {
+                    var dialog = new AlertDialog.Builder(activity)
+                        .SetMessage(message)
+                        .SetTitle(title)
+                        .SetPositiveButton(okButton, delegate
+                        {
+                            tcs.TrySetResult(true);
+                        })
+                        .SetNegativeButton(cancelButton, delegate
+                        {
+                            tcs.TrySetResult(false);
+                        })
+                        .Create();
+
+                    dialog.Show();
+
+                    dismiss?.Register(() =>
+                    {
+                        dialog.Dismiss();
+                        tcs.TrySetResult(false);
+                    });
+                });
+            }
 	        else
 	        {
 	            tcs.TrySetResult(false);
@@ -95,31 +105,25 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        string neutral = "Maybe")
 	    {
 	        var activity = CurrentActivity;
-            if (activity != null)
+	        activity?.RunOnUiThread(() =>
 	        {
-                activity.RunOnUiThread(() =>
-	            {
-	                new AlertDialog.Builder(activity)
-	                    .SetMessage(message)
-	                    .SetTitle(title)
-	                    .SetPositiveButton(positive, delegate
-	                    {
-	                        if (answer != null)
-	                            answer(ConfirmThreeButtonsResponse.Positive);
-	                    })
-	                    .SetNegativeButton(negative, delegate
-	                    {
-	                        if (answer != null)
-	                            answer(ConfirmThreeButtonsResponse.Negative);
-	                    })
-	                    .SetNeutralButton(neutral, delegate
-	                    {
-	                        if (answer != null)
-	                            answer(ConfirmThreeButtonsResponse.Neutral);
-	                    })
-	                    .Show();
-	            });
-	        }
+	            new AlertDialog.Builder(activity)
+	                .SetMessage(message)
+	                .SetTitle(title)
+	                .SetPositiveButton(positive, delegate
+	                {
+                        answer?.Invoke(ConfirmThreeButtonsResponse.Positive);
+                    })
+	                .SetNegativeButton(negative, delegate
+	                {
+                        answer?.Invoke(ConfirmThreeButtonsResponse.Negative);
+                    })
+	                .SetNeutralButton(neutral, delegate
+	                {
+                        answer?.Invoke(ConfirmThreeButtonsResponse.Neutral);
+                    })
+	                .Show();
+	        });
 	    }
 
         //public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
@@ -177,12 +181,6 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        {
                 activity.RunOnUiThread(() =>
 	            {
-	                if (activity == null)
-	                {
-        	            tcs.TrySetCanceled();
-	                    return;
-	                }
-
 		            var input = new EditText(activity) {Hint = placeholder, Text = defaultValue };
 	                if (fieldType == FieldType.Email)
 	                    input.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
@@ -236,30 +234,27 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	        {
 	            var activity = CurrentActivity;
 
-                if (activity != null)
+	            activity?.RunOnUiThread(() =>
 	            {
-                    activity.RunOnUiThread(() =>
+	                var input = new ProgressBar(activity, null, Android.Resource.Attribute.ProgressBarStyle)
 	                {
-	                    var input = new ProgressBar(activity, null, Android.Resource.Attribute.ProgressBarStyle)
-	                    {
-	                        Indeterminate = true,
-	                        LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
-	                    };
+	                    Indeterminate = true,
+	                    LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
+	                };
 
-	                    var dialog = new AlertDialog.Builder(activity)
-	                        .SetMessage(message)
-	                        .SetTitle(title)
-	                        .SetView(input)
-	                        .SetCancelable(userCanDismiss)
-                            .SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel))
-                            .Create();
-                        dialog.SetCanceledOnTouchOutside(userCanDismiss);
-                        //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
+	                var dialog = new AlertDialog.Builder(activity)
+	                    .SetMessage(message)
+	                    .SetTitle(title)
+	                    .SetView(input)
+	                    .SetCancelable(userCanDismiss)
+	                    .SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel))
+	                    .Create();
+	                dialog.SetCanceledOnTouchOutside(userCanDismiss);
+	                //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
 
-	                    dialog.Show();
-	                    dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
-	                });
-	            }
+	                dialog.Show();
+	                dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
+	            });
 	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
 	        return cancellationTokenSource.Token;	   
@@ -399,7 +394,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                                 tcs.TrySetResult(2+ realIndex);
                             }
 
-                        }).SetInverseBackgroundForced(true)
+                        })
+                        //.SetInverseBackgroundForced(true) //This method was deprecated in API level 23. This flag is only used for pre-Material themes. Instead, specify the window background using on the alert dialog theme.
                         .SetCancelable(userCanDismiss)
                         .Create();
                     ad.SetCanceledOnTouchOutside(userCanDismiss);
