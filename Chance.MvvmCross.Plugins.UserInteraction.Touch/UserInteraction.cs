@@ -50,11 +50,15 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 				confirm.Clicked += (sender, args) => tcs.TrySetResult(confirm.CancelButtonIndex != args.ButtonIndex);
 				confirm.Show();
 
-			    dismiss?.Register(() =>
+			    if (dismiss != null)
 			    {
-			        if(confirm.Visible)
-			            confirm.DismissWithClickedButtonIndex(0, true);
-			    });
+			        var registration = dismiss.Value.Register(() =>
+			        {
+			            if (confirm.Visible)
+			                confirm.DismissWithClickedButtonIndex(0, true);
+			        });
+			        tcs.Task.ContinueWith(t => registration.Dispose());
+			    }
 			});
 		    return tcs.Task;
 		}
@@ -265,13 +269,15 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                             UIView.Animate(0.4, () => { waitView.Alpha = 1; });
                             indicator.StartAnimating();
 
-                            dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                            var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
                             {
                                 indicator.StopAnimating();
                                 waitView.RemoveFromSuperview();
                                 waitView.Dispose();
                                 tcs.TrySetResult(0);
                             }), true);
+                            // ReSharper disable once MethodSupportsCancellation
+                            tcs.Task.ContinueWith(tt => registration.Dispose());
                         }
                         else
                         {
@@ -314,9 +320,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
 	        {
 	            var actionSheet = new UIActionSheet(title, (IUIActionSheetDelegate)null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
-	            dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
+	            var registration = dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
+	            // ReSharper disable once MethodSupportsCancellation
+	            tcs.Task.ContinueWith(t => registration.Dispose());
 
-	            actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);
+                actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);
 	            actionSheet.Clicked += (sender, args) =>
 	            {
 	                //Mvx.Warning("clicked: {0}, FirstOtherButtonIndex: {1}, cancel index: {2}, destroy index: {3}", args.ButtonIndex, actionSheet.FirstOtherButtonIndex, actionSheet.CancelButtonIndex, actionSheet.DestructiveButtonIndex);
@@ -423,8 +431,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                     }
                 };
 
+                CancellationTokenRegistration registration;
                 if (dismiss.HasValue)
-                    dismiss.Value.Register(() => hideHolder(false));
+                {
+                    registration = dismiss.Value.Register(() => hideHolder(false));
+                    tcs.Task.ContinueWith(t => registration.Dispose());
+                }
                 holder.AddGestureRecognizer(new UITapGestureRecognizer(() => hideHolder(true)));
 
                 UIView.Animate(1f, () => holder.Alpha = .7f, async () =>
