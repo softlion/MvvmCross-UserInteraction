@@ -20,27 +20,6 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
             return new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
         }
 
-        //public void Confirm(string message, Action okClicked, string title = "", string okButton = "OK", string cancelButton = "Cancel")
-        //{
-        //    Confirm(message, confirmed =>
-        //    {
-        //        if (confirmed)
-        //            okClicked();
-        //    },
-        //    title, okButton, cancelButton);
-        //}
-
-        //public void Confirm(string message, Action<bool> answer, string title = "", string okButton = "OK", string cancelButton = "Cancel")
-        //{
-        //    UIApplication.SharedApplication.InvokeOnMainThread(() =>
-        //    {
-        //        var confirm = new UIAlertView(title ?? string.Empty, message,null, cancelButton, okButton);
-        //        if (answer != null)
-        //            confirm.Clicked += (sender, args) => answer(confirm.CancelButtonIndex != args.ButtonIndex);
-        //        confirm.Show();
-        //    });
-        //}
-
 		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
 		{
 		    var tcs = new TaskCompletionSource<bool>();
@@ -54,8 +33,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 			    {
 			        var registration = dismiss.Value.Register(() =>
 			        {
-			            if (confirm.Visible)
-			                confirm.DismissWithClickedButtonIndex(0, true);
+			            UIApplication.SharedApplication.InvokeOnMainThread(() =>
+			            {
+			                if (confirm.Visible)
+			                    confirm.DismissWithClickedButtonIndex(0, true);
+                        });
 			        });
 			        tcs.Task.ContinueWith(t => registration.Dispose());
 			    }
@@ -85,20 +67,6 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                 }
             });
         }
-
-        //public void Alert(string message, Action done = null, string title = "", string okButton = "OK")
-        //{
-        //    UIApplication.SharedApplication.InvokeOnMainThread(() =>
-        //    {
-        //        var alert = new UIAlertView(title ?? string.Empty, message, null, okButton);
-        //        if (done != null)
-        //        {
-        //            alert.Clicked += (sender, args) => done();
-        //        }
-        //        alert.Show();
-        //    });
-
-        //}
 
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{
@@ -140,46 +108,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	            }
 	        };
 
-			UIApplication.SharedApplication.InvokeOnMainThread(() =>
-			{
-			    //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
-			    //{
-			        var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
-                    alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text) ));
-                    alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null) ));
-                    alert.AddTextField(configureTextField);
-                    var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-                    if (currentView != null && currentView.RootViewController != null)
-                        currentView.RootViewController.PresentViewController(alert, true, null);
-                    else
-                        Mvx.Warning("Input: no window/nav controller on which to display");
-			    //}
-			    //else
-			    //{
-			    //    var input = new UIAlertView(title ?? string.Empty, message, (IUIAlertViewDelegate)null, cancelButton, okButton) {AlertViewStyle = UIAlertViewStyle.PlainTextInput};
-			    //    var textField = input.GetTextField(0);
-			    //    configureTextField(textField);
-
-			    //    //hack alert: fix bug in iOS 8 that prevents keyboard from poping up
-       //             //Works, but alert stays below the keyboard ... it does not move up.
-       //             //if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
-       //             //{
-       //             //    input.Presented += (sender, args) =>
-       //             //    {
-       //             //        var textRange = textField.SelectedTextRange;
-       //             //        textField.SelectAll(input);
-       //             //        textField.SelectedTextRange = textRange;
-       //             //    };
-       //             //}
-
-			    //    input.Clicked += (sender, args) =>
-			    //    {
-			    //        var result = args.ButtonIndex != input.CancelButtonIndex ? textField.Text : null;
-			    //        tcs.TrySetResult(result);
-			    //    };
-			    //    input.Show();
-			    //}
-			});
+	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
+	        {
+	            var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
+	            alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text)));
+	            alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null)));
+	            alert.AddTextField(configureTextField);
+	            var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+	            if (currentView != null && currentView.RootViewController != null)
+	                currentView.RootViewController.PresentViewController(alert, true, null);
+	            else
+	                Mvx.Warning("Input: no window/nav controller on which to display");
+	        });
 
 	        return tcs.Task;
 	    }
@@ -320,7 +260,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
 	        {
 	            var actionSheet = new UIActionSheet(title, (IUIActionSheetDelegate)null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
-	            var registration = dismiss.Register(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false));
+	            var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false)));
 	            // ReSharper disable once MethodSupportsCancellation
 	            tcs.Task.ContinueWith(t => registration.Dispose());
 
@@ -434,7 +374,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                 CancellationTokenRegistration registration;
                 if (dismiss.HasValue)
                 {
-                    registration = dismiss.Value.Register(() => hideHolder(false));
+                    registration = dismiss.Value.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() => hideHolder(false)));
                     tcs.Task.ContinueWith(t => registration.Dispose());
                 }
                 holder.AddGestureRecognizer(new UITapGestureRecognizer(() => hideHolder(true)));
@@ -454,6 +394,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
     /// A UILabel which automatically sets its PreferredMaxLayoutWidth to its constraint width,
     /// so it can work nicely with MvxAutolayoutTableViewSource, without additional work
     /// </summary>
+    // ReSharper disable once InconsistentNaming
     internal class UILabelEx : UILabel
     {
         public override void LayoutSubviews()
@@ -471,26 +412,4 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
         }
     }
 }
-
-
-/*
-public override void ViewDidDisappear (bool animated)
-{
-    if (this.NavigationController != null) {
-        var controllers = this.NavigationController.ViewControllers;
-        var newcontrollers = new UIViewController[controllers.Length - 1];
-        int index = 0;
-        foreach (var item in controllers) {
-            if (item != this) {
-                newcontrollers [index] = item;
-                index++;
-            }
-
-        }
-        this.NavigationController.ViewControllers = newcontrollers;
-    }
-    base.ViewDidDisappear(animated);
-}
-*/
-
 

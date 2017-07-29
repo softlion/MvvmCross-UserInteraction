@@ -89,8 +89,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
                     dismiss?.Register(() =>
                     {
-                        dialog.Dismiss();
-                        tcs.TrySetResult(false);
+                        activity.RunOnUiThread(() =>
+                        {
+                            dialog.Dismiss();
+                            tcs.TrySetResult(false);
+                        });
                     });
                 });
             }
@@ -414,8 +417,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
 	                dismiss.Register(() =>
 	                {
-	                    ad.Dismiss();
-	                    cancelAction();
+	                    activity.RunOnUiThread(() =>
+	                    {
+	                        ad.Dismiss();
+	                        cancelAction();
+	                    });
 	                });
 	            });
 	        }
@@ -439,8 +445,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                     var toast = Android.Widget.Toast.MakeText(activity, text, duration == ToastDuration.Short ? ToastLength.Short : ToastLength.Long);
                     toast.SetGravity((position == ToastPosition.Bottom ? GravityFlags.Bottom : (position == ToastPosition.Top ? GravityFlags.Top : GravityFlags.CenterVertical))|GravityFlags.CenterHorizontal, 0, positionOffset);
 
-                    if (dismiss.HasValue)
-                        dismiss.Value.Register(toast.Cancel);
+                    dismiss?.Register(() => activity.RunOnUiThread(() => toast.Cancel()));
                     toast.Show();
 
                     tcs.TrySetResult(0);
@@ -462,7 +467,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
     internal class DialogCancelledListener : Java.Lang.Object, IDialogInterfaceOnCancelListener
     {
-        readonly Action action;
+        private readonly Action action;
 
         public DialogCancelledListener(Action action)
         {
@@ -471,8 +476,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 
         public void OnCancel(IDialogInterface dialog)
         {
-            if (action != null)
-                action();
+            action?.Invoke();
         }
     }
 }
