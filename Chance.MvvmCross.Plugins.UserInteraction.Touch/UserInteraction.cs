@@ -80,11 +80,11 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 		    return tcs.Task;
 		}
 
-	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default)
+	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0)
 	    {
 	        var tcs = new TaskCompletionSource<string>();
 
-	        Action<UITextField> configureTextField = textField =>
+	        void ConfigureTextField(UITextField textField)
 	        {
 	            if (placeholder != null)
 	                textField.Placeholder = placeholder;
@@ -106,14 +106,26 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	                    };
 	                }
 	            }
-	        };
+
+	            if (maxLength > 0)
+	            {
+	                textField.ValueChanged += (sender, args) =>
+	                {
+	                    var text = textField.Text;
+	                    if (text.Length > maxLength)
+	                    {
+	                        textField.Text = text.Substring(0, maxLength);
+	                    }
+	                };
+	            }
+	        }
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
 	        {
 	            var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
 	            alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text)));
 	            alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null)));
-	            alert.AddTextField(configureTextField);
+	            alert.AddTextField(ConfigureTextField);
 	            var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
 	            if (currentView != null && currentView.RootViewController != null)
 	                currentView.RootViewController.PresentViewController(alert, true, null);

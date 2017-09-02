@@ -28,7 +28,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
         //void Alert(string message, Action done = null, string title = "", string okButton = "OK");
 		Task Alert(string message, string title = "", string okButton = "OK");
 
-	    Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default);
+	    Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0);
 
 	    void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe");

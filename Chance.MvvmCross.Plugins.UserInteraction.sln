@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chance.MvvmCross.Plugins.UserInteraction", "Chance.MvvmCross.Plugins.UserInteraction\Chance.MvvmCross.Plugins.UserInteraction.csproj", "{C912911A-2216-447C-ADF4-8DC190804D75}"
 EndProject
@@ -53,6 +53,9 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7EDF8691-1C9C-4453-9564-CE4A651E7824} = {CE291FF3-DF0C-4946-B6BD-F083D5CAF14B}
 		{BB599BA6-F8DE-43AB-80BC-68537C4C316E} = {CE291FF3-DF0C-4946-B6BD-F083D5CAF14B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E27679B8-83D6-4D73-BC44-F0F321B9954F}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Chance.MvvmCross.Plugins.UserInteraction\Chance.MvvmCross.Plugins.UserInteraction.csproj

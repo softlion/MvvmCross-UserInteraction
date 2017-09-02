@@ -75,11 +75,12 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                     var dialog = new AlertDialog.Builder(activity)
                         .SetMessage(message)
                         .SetTitle(title)
-                        .SetPositiveButton(okButton, delegate
+                        .SetCancelable(false)
+                        .SetPositiveButton(okButton, (sender, args) => 
                         {
                             tcs.TrySetResult(true);
                         })
-                        .SetNegativeButton(cancelButton, delegate
+                        .SetNegativeButton(cancelButton, (sender, args) => 
                         {
                             tcs.TrySetResult(false);
                         })
@@ -174,7 +175,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		    return tcs.Task;
 		}
 
-	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default)
+	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength=0)
 	    {
 	        var tcs = new TaskCompletionSource<string>();
 
@@ -189,6 +190,13 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                    input.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
 			        else if (fieldType == FieldType.Integer)
                         input.InputType = InputTypes.ClassNumber; // | InputTypes.NumberFlagDecimal;
+
+	                if (maxLength > 0)
+	                {
+	                    var filters = input.GetFilters().ToList();
+	                    filters.Add(new InputFilterLengthFilter(maxLength));
+	                    input.SetFilters(filters.ToArray());
+	                }
 
 	                var dialog = new AlertDialog.Builder(activity)
 		                .SetMessage(message)
