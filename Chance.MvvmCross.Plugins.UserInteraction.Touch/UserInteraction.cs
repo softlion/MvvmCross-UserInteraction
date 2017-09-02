@@ -136,16 +136,45 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	        return tcs.Task;
 	    }
 
+        class WaitIndicatorImpl : IWaitIndicator
+        {
+            private string title, body;
 
-        public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
+            public UIAlertView Dialog { get; set; }
+
+            public WaitIndicatorImpl(CancellationToken userDismissedToken)
+            {
+                UserDismissedToken = userDismissedToken;
+            }
+
+            public CancellationToken UserDismissedToken { get; }
+            public string Title { set { title = value; if(Dialog!=null) Dialog.Title = value; } get => title; }
+            public string Body { set { body = value; if (Dialog != null) Dialog.Message = value; } get => body; }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="dismiss">CancellationToken that dismiss the indicator when cancelled</param>
+        /// <param name="message">body</param>
+        /// <param name="title"></param>
+        /// <param name="displayAfterSeconds">delay show. Can be cancelled before it is displayed.</param>
+        /// <param name="userCanDismiss">Enable tap to dismiss</param>
+        /// <returns>CancellationToken is cancelled if the indicator is dismissed by the user (if userCanDismiss is true)</returns>
+        public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
         {
             var cancellationTokenSource = new CancellationTokenSource();
+            var wi = new WaitIndicatorImpl(cancellationTokenSource.Token)
+            {
+                Title = title,
+                Body = message
+            };
 
             //var currentView = Mvx.Resolve<IMvxAndroidCurrentTopActivity>();
 
             Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t => UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-				var input = new UIAlertView { Title = title ?? string.Empty, Message = message ?? string.Empty };
+				var input = new UIAlertView { Title = wi.Title ?? string.Empty, Message = wi.Body ?? string.Empty };
+                wi.Dialog = input;
                 
                 //Adding an indicator by either of these 2 methods won't work. Why ?
 
@@ -171,7 +200,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                 //NSNotificationCenter.UIApplicationDidEnterBackgroundNotification
             }), TaskContinuationOptions.NotOnCanceled);
 
-            return cancellationTokenSource.Token;
+            return wi;
         }
 
         public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)

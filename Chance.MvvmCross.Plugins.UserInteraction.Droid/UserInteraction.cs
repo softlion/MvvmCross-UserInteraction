@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Android.App;
 using Android.Content;
@@ -237,11 +238,32 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    }
 
 
-	    public CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
+	    class WaitIndicatorImpl : IWaitIndicator
+	    {
+	        private string title, body;
+
+            public AlertDialog Dialog { get; set; }
+
+            public WaitIndicatorImpl(CancellationToken userDismissedToken)
+	        {
+	            UserDismissedToken = userDismissedToken;
+	        }
+
+            public CancellationToken UserDismissedToken { get; }
+	        public string Title { set { Dialog?.SetTitle(value); title = value; } get => title; }
+	        public string Body { set { Dialog?.SetMessage(value); body = value; } get => body; }
+	    }
+
+	    public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
 	    {
             var cancellationTokenSource = new CancellationTokenSource();
+	        var wi = new WaitIndicatorImpl(cancellationTokenSource.Token)
+	        {
+                Title = title,
+                Body = message
+	        };
 
-	        Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t =>
+            Task.Delay((displayAfterSeconds ?? 0)*1000, dismiss).ContinueWith(t =>
 	        {
 	            var activity = CurrentActivity;
 
@@ -250,25 +272,26 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                var input = new ProgressBar(activity, null, Android.Resource.Attribute.ProgressBarStyle)
 	                {
 	                    Indeterminate = true,
-	                    LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical}
+	                    LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical},
 	                };
 
 	                var dialog = new AlertDialog.Builder(activity)
-	                    .SetMessage(message)
-	                    .SetTitle(title)
+	                    .SetTitle(wi.Title)
+	                    .SetMessage(wi.Body)
 	                    .SetView(input)
 	                    .SetCancelable(userCanDismiss)
 	                    .SetOnCancelListener(new DialogCancelledListener(cancellationTokenSource.Cancel))
 	                    .Create();
 	                dialog.SetCanceledOnTouchOutside(userCanDismiss);
-	                //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
+                    //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
 
-	                dialog.Show();
+	                wi.Dialog = dialog;
+                    dialog.Show();
 	                dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
 	            });
 	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
-	        return cancellationTokenSource.Token;	   
+	        return wi;
         }
 
         public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)

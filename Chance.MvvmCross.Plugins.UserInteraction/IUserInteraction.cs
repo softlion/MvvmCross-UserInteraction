@@ -14,7 +14,25 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
         Integer
     }
 
-	public interface IUserInteraction
+    public interface IWaitIndicator
+    {
+        /// <summary>
+        /// cancelled if the indicator is dismissed by the user (if userCanDismiss is true)
+        /// </summary>
+        CancellationToken UserDismissedToken { get; }
+
+        /// <summary>
+        /// Update the title text while displayed
+        /// </summary>
+        string Title { set; }
+
+        /// <summary>
+        /// Update the body text while displayed
+        /// </summary>
+        string Body { set; }
+    }
+
+    public interface IUserInteraction
 	{
         /// <summary>
         /// Set default color for all activity indicators
@@ -33,7 +51,16 @@ namespace Chance.MvvmCross.Plugins.UserInteraction
 	    void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe");
 
-        CancellationToken WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true);
+	    /// <summary>
+	    /// Displays a wait indicator (title + body + indeterminate progress bar)
+	    /// </summary>
+	    /// <param name="dismiss">CancellationToken that dismiss the indicator when cancelled</param>
+	    /// <param name="message">body</param>
+	    /// <param name="title"></param>
+	    /// <param name="displayAfterSeconds">delay show. Can be cancelled before it is displayed.</param>
+	    /// <param name="userCanDismiss">Enable tap to dismiss</param>
+	    /// <returns>A controller for the wait indicator</returns>
+	    IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true);
 
         /// <summary>
         /// Display an activity indicator which blocks user interaction.
