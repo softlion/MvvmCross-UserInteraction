@@ -148,8 +148,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
             }
 
             public CancellationToken UserDismissedToken { get; }
-            public string Title { set { title = value; if(Dialog!=null) Dialog.Title = value; } get => title; }
-            public string Body { set { body = value; if (Dialog != null) Dialog.Message = value; } get => body; }
+            public string Title { set { title = value; if(Dialog!=null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Title = value); } get => title; }
+            public string Body { set { body = value; if (Dialog != null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Message = value); } get => body; }
         }
 
         /// <summary>

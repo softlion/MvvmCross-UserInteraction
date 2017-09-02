@@ -241,17 +241,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	    class WaitIndicatorImpl : IWaitIndicator
 	    {
 	        private string title, body;
+	        public Activity Context { get; set; }
 
             public AlertDialog Dialog { get; set; }
 
             public WaitIndicatorImpl(CancellationToken userDismissedToken)
-	        {
-	            UserDismissedToken = userDismissedToken;
-	        }
+            {
+                UserDismissedToken = userDismissedToken;
+            }
 
             public CancellationToken UserDismissedToken { get; }
-	        public string Title { set { Dialog?.SetTitle(value); title = value; } get => title; }
-	        public string Body { set { Dialog?.SetMessage(value); body = value; } get => body; }
+	        public string Title { set { if(Dialog!=null) Context.RunOnUiThread(() => Dialog.SetTitle(value)); title = value; } get => title; }
+	        public string Body { set { if (Dialog != null) Context.RunOnUiThread(() => Dialog.SetMessage(value)); body = value; } get => body; }
 	    }
 
 	    public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
