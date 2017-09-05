@@ -251,8 +251,8 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
             }
 
             public CancellationToken UserDismissedToken { get; }
-	        public string Title { set { if(Dialog!=null) Context.RunOnUiThread(() => Dialog.SetTitle(value)); title = value; } get => title; }
-	        public string Body { set { if (Dialog != null) Context.RunOnUiThread(() => Dialog.SetMessage(value)); body = value; } get => body; }
+	        public string Title { set { if(Dialog!=null) Context?.RunOnUiThread(() => Dialog.SetTitle(value)); title = value; } get => title; }
+	        public string Body { set { if (Dialog != null) Context?.RunOnUiThread(() => Dialog.SetMessage(value)); body = value; } get => body; }
 	    }
 
 	    public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
@@ -286,6 +286,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 	                dialog.SetCanceledOnTouchOutside(userCanDismiss);
                     //dialog.CancelEvent += delegate { cancellationTokenSource.Cancel(); };
 
+	                wi.Context = activity;
 	                wi.Dialog = dialog;
                     dialog.Show();
 	                dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
