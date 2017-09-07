@@ -203,6 +203,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
 		                .SetMessage(message)
 		                .SetTitle(title)
 		                .SetView(input)
+	                    .SetCancelable(false)
 		                .SetPositiveButton(okButton, delegate
 		                {
 		                    tcs.TrySetResult(input.Text);
