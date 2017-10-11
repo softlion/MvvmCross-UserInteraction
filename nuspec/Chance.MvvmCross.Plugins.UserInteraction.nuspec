@@ -21,7 +21,7 @@
 	</metadata>
 	<files>		
 		<!-- PCL -->
-		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\portable-net45+win+wpa81\Chance.MvvmCross.Plugins.UserInteraction.dll" />
+		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\netstandard2.0\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 
 		<!-- phone - not supported
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\sl4-wp71\Chance.MvvmCross.Plugins.UserInteraction.dll" />
@@ -32,12 +32,12 @@
 		<!-- droid -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Droid\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid10\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
+    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid10\Bootstrap\UserInteractionPluginBootstrap.cs" />
     
 		<!-- touch -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp" target="content\MonoTouch\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
+    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp" target="content\xamarinios\Bootstrap\UserInteractionPluginBootstrap.cs" />
     
 	</files>
 </package>

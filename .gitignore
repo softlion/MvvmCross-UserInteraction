@@ -111,4 +111,4 @@ UpgradeLog*.XML
 
 # Nuget package files
 *.nupkg
-/.vs/config/applicationhost.config
+.vs/
