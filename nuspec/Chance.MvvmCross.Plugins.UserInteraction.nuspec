@@ -12,7 +12,7 @@
 		<tags>mvvmcross xamarin</tags>
 		<dependencies>
       <group>
-        <dependency id="MvvmCross.Platform" version="5.1.1" />
+        <dependency id="MvvmCross.Platform" version="5.2.1" />
       </group>
       <group targetFramework="Xamarin.iOS10">
         <dependency id="Cirrious.FluentLayout" version="2.6.0" />
@@ -32,12 +32,12 @@
 		<!-- droid -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Droid\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid10\Bootstrap\UserInteractionPluginBootstrap.cs" />
+    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid10\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
     
 		<!-- touch -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp" target="content\xamarinios\Bootstrap\UserInteractionPluginBootstrap.cs" />
+    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp" target="content\xamarinios\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
     
 	</files>
 </package>
