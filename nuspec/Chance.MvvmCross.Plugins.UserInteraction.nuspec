@@ -12,7 +12,8 @@
 		<tags>mvvmcross xamarin</tags>
 		<dependencies>
       <group>
-        <dependency id="MvvmCross.Platform" version="5.2.1" />
+        <!-- Remove dependency as it includes the WPF version instead of the PCL version, and you can not specify which one to use when targeting a netstandard2 lib. -->
+        <!--<dependency id="MvvmCross.Platform" version="5.2.1" />-->
       </group>
       <group targetFramework="Xamarin.iOS10">
         <dependency id="Cirrious.FluentLayout" version="2.6.0" />
