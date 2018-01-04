@@ -7,17 +7,24 @@ using System.Threading;
 using UIKit;
 using System.Threading.Tasks;
 using MvvmCross.Platform;
+using MvvmCross.Platform.Logging;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 {
 	public class UserInteraction : IUserInteraction
     {
+        private readonly IMvxLog log;
         private static UIColor defaultColor;
-        public uint DefaultColor { set { defaultColor = FromArgb(value); } }
+        public uint DefaultColor { set => defaultColor = FromArgb(value); }
 
         UIColor FromArgb(uint value)
         {
             return new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
+        }
+
+        public UserInteraction(IMvxLog logger)
+        {
+            log = logger;
         }
 
 		public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
@@ -90,6 +97,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	                textField.Placeholder = placeholder;
 	            if (defaultValue != null)
 	                textField.Text = defaultValue;
+
 	            if (fieldType != FieldType.Default)
 	            {
 	                if (fieldType == FieldType.Email)
@@ -127,10 +135,10 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	            alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null)));
 	            alert.AddTextField(ConfigureTextField);
 	            var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-	            if (currentView != null && currentView.RootViewController != null)
+	            if (currentView?.RootViewController != null)
 	                currentView.RootViewController.PresentViewController(alert, true, null);
 	            else
-	                Mvx.Warning("Input: no window/nav controller on which to display");
+	                log.Warn("Input: no window/nav controller on which to display");
 	        });
 
 	        return tcs.Task;
@@ -262,7 +270,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                         }
                         else
                         {
-                            Mvx.Warning("UserInteraction.ActivityIndicator: no window on which to display");
+                            log.Warn("UserInteraction.ActivityIndicator: no window on which to display");
                         }
                     });
                 }
@@ -331,7 +339,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 	            }
 	            else
 	            {
-	                Mvx.Warning("UserInteraction.Menu: no window on which to display");
+	                log.Warn("UserInteraction.Menu: no window on which to display");
 	            }
 	        });
 
@@ -348,7 +356,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                 var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
                 if (currentView == null)
                 {
-                    Mvx.Warning("UserInteraction.Toast: no window on which to display");
+                    log.Warn("UserInteraction.Toast: no window on which to display");
                     tcs.TrySetResult(-1);
                     return;
                 }
@@ -385,18 +393,15 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 
                 //interactions
                 var inCall = false; //Prevent rebond on tap
-                Action<bool> hideHolder = animated =>
+
+                void HideHolder(bool animated)
                 {
-                    if (inCall)
-                        return;
+                    if (inCall) return;
                     inCall = true;
 
                     if (animated)
                     {
-                        UIView.Animate(1f, () =>
-                        {
-                            holder.Alpha = 0;
-                        }, () =>
+                        UIView.Animate(1f, () => { holder.Alpha = 0; }, () =>
                         {
                             holder.RemoveFromSuperview();
                             holder.Dispose();
@@ -410,20 +415,20 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
                         holder.Dispose();
                         tcs.TrySetResult(0);
                     }
-                };
+                }
 
                 CancellationTokenRegistration registration;
                 if (dismiss.HasValue)
                 {
-                    registration = dismiss.Value.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() => hideHolder(false)));
+                    registration = dismiss.Value.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() => HideHolder(false)));
                     tcs.Task.ContinueWith(t => registration.Dispose());
                 }
-                holder.AddGestureRecognizer(new UITapGestureRecognizer(() => hideHolder(true)));
+                holder.AddGestureRecognizer(new UITapGestureRecognizer(() => HideHolder(true)));
 
                 UIView.Animate(1f, () => holder.Alpha = .7f, async () =>
                 {
-                    await Task.Delay((int)duration, dismiss.HasValue ? dismiss.Value : CancellationToken.None).ConfigureAwait(false);
-                    UIApplication.SharedApplication.InvokeOnMainThread(() => hideHolder(true));
+                    await Task.Delay((int)duration, dismiss ?? CancellationToken.None).ConfigureAwait(false);
+                    UIApplication.SharedApplication.InvokeOnMainThread(() => HideHolder(true));
                 });
             });
 
