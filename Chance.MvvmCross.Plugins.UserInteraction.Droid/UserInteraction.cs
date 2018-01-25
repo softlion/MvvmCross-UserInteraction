@@ -158,14 +158,18 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
             {
                 activity.RunOnUiThread(() =>
                 {
-                    new AlertDialog.Builder(activity)
+                    var dialog = new AlertDialog.Builder(activity)
                         .SetMessage(message)
                         .SetTitle(title)
+                        .SetOnCancelListener(new DialogCancelledListener(() =>
+                        {
+                            tcs.TrySetResult(false);
+                        }))
                         .SetPositiveButton(okButton, (s,e) =>
                         {
                             tcs.TrySetResult(true);
-                        })
-                        .Show();
+                        });
+                    dialog.Show();
                 });
             }
             else
