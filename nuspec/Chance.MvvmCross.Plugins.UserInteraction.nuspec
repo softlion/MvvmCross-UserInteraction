@@ -1,9 +1,9 @@
 ﻿<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>Chance.MvvmCross.Plugins.UserInteraction</id>
-		<version>1.1.0.5</version>
+		<version>0.0.0</version>
 		<title>MvvmCross UserInteraction Plugin</title>
-		<authors>Benjamin Mayrargue, Brian Chance</authors>
+		<authors>Benjamin Mayrargue</authors>
 		<owners>Benjamin Mayrargue</owners>
 		<licenseUrl>https://github.com/softlion/MvvmCross-UserInteraction/blob/master/LICENSE</licenseUrl>
 		<projectUrl>https://github.com/softlion/MvvmCross-UserInteraction</projectUrl>
@@ -12,8 +12,7 @@
 		<tags>mvvmcross xamarin</tags>
 		<dependencies>
       <group>
-        <!-- Remove dependency as it includes the WPF version instead of the PCL version, and you can not specify which one to use when targeting a netstandard2 lib. -->
-        <!--<dependency id="MvvmCross.Platform" version="5.6.3" />-->
+        <dependency id="MvvmCross.Platform" version="6.0.0" />
       </group>
       <group targetFramework="Xamarin.iOS10">
         <dependency id="Cirrious.FluentLayout" version="2.6.0" />
@@ -21,7 +20,6 @@
     </dependencies>
 	</metadata>
 	<files>		
-		<!-- PCL -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\netstandard2.0\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 
 		<!-- phone - not supported
@@ -33,12 +31,10 @@
 		<!-- droid -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Droid\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" target="lib\MonoAndroid10\Chance.MvvmCross.Plugins.UserInteraction.Droid.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp" target="content\MonoAndroid10\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
     
 		<!-- touch -->
 		<file src="..\bin\Release\Portable\Chance.MvvmCross.Plugins.UserInteraction.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.dll" />
 		<file src="..\bin\Release\Touch\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" target="lib\Xamarin.iOS10\Chance.MvvmCross.Plugins.UserInteraction.Touch.dll" />
-    <file src="..\Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp" target="content\xamarinios\Bootstrap\UserInteractionPluginBootstrap.cs.pp" />
     
 	</files>
 </package>

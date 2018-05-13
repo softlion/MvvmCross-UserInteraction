@@ -6,8 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using UIKit;
 using System.Threading.Tasks;
-using MvvmCross.Platform;
-using MvvmCross.Platform.Logging;
+using MvvmCross.Logging;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
 {

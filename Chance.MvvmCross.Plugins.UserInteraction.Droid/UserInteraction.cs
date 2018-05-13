@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Android.App;
 using Android.Content;
@@ -12,8 +11,8 @@ using Android.Text;
 using Android.Views;
 using Android.Widget;
 using System.Threading.Tasks;
-using MvvmCross.Platform;
-using MvvmCross.Platform.Droid.Platform;
+using MvvmCross;
+using MvvmCross.Platforms.Android;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
@@ -25,7 +24,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
     /// </summary>
 	public class UserInteraction : IUserInteraction
 	{
-		protected Activity CurrentActivity => Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity;
+	    protected Activity CurrentActivity => Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity;
 
 	    /// <summary>
         /// Not used. In android use global styles instead.
@@ -189,7 +188,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
             if (activity != null)
 	        {
                 activity.RunOnUiThread(() =>
-	            {
+                {
 		            var input = new EditText(activity) {Hint = placeholder, Text = defaultValue };
 	                if (fieldType == FieldType.Email)
 	                    input.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
@@ -344,7 +343,7 @@ namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
                                     catch (Exception)
                                     {
                                         //Dialog dismissed
-                                        Mvx.Trace("Exception while dismissing dialog, is the activity hidden before the dialog has been dismissed ?");
+                                        //Mvx.Trace("Exception while dismissing dialog, is the activity hidden before the dialog has been dismissed ?");
                                     }
                                 }
                             });
