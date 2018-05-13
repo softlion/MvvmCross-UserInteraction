@@ -1,6 +1,6 @@
 del *.nupkg
 
-set version=300.0.0
+set version=300.0.1
 
 nuget pack Chance.MvvmCross.Plugins.UserInteraction.nuspec -Version %version%
 copy /y *.nupkg ..\..\nugets
