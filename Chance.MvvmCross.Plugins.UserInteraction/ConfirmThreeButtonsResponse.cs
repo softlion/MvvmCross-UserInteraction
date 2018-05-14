@@ -1,6 +1,6 @@
 using System;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction
+namespace Vapolia.MvvmCross.UserInteraction
 {
 	public enum ConfirmThreeButtonsResponse
 	{

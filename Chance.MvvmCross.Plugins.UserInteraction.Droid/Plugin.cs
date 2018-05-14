@@ -2,7 +2,7 @@ using System;
 using MvvmCross;
 using MvvmCross.Plugin;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
+namespace Vapolia.MvvmCross.UserInteraction.Droid
 {
 	public class Plugin : IMvxPlugin
 	{

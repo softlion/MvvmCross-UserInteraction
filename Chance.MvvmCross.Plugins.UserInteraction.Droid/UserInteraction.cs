@@ -15,7 +15,7 @@ using MvvmCross;
 using MvvmCross.Platforms.Android;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction.Droid
+namespace Vapolia.MvvmCross.UserInteraction.Droid
 {
     /// <summary>
     /// BM: ajout de WaitIndicator

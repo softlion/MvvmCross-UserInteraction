@@ -8,7 +8,7 @@ using UIKit;
 using System.Threading.Tasks;
 using MvvmCross.Logging;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
+namespace Vapolia.MvvmCross.UserInteraction.Touch
 {
 	public class UserInteraction : IUserInteraction
     {

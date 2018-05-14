@@ -2,7 +2,7 @@ using System;
 using MvvmCross;
 using MvvmCross.Plugin;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction.Touch
+namespace Vapolia.MvvmCross.UserInteraction.Touch
 {
 	public class Plugin : IMvxPlugin
 	{

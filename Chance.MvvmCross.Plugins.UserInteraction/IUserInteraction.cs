@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Chance.MvvmCross.Plugins.UserInteraction
+namespace Vapolia.MvvmCross.UserInteraction
 {
     /// <summary>
     /// Impact displayed keyboard
