@@ -7,21 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vapolia.MvvmCross.UserInter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vapolia.MvvmCross.UserInteraction.Touch", "Chance.MvvmCross.Plugins.UserInteraction.Touch\Vapolia.MvvmCross.UserInteraction.Touch.csproj", "{CA487D21-3429-498C-971E-70A9C4453E6C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bootstrap", "Bootstrap", "{CE291FF3-DF0C-4946-B6BD-F083D5CAF14B}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Droid", "Droid", "{7EDF8691-1C9C-4453-9564-CE4A651E7824}"
-	ProjectSection(SolutionItems) = preProject
-		Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp = Chance.MvvmCross.Plugins.UserInteraction.Droid\UserInteractionPluginBootstrap.cs.pp
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Touch", "Touch", "{BB599BA6-F8DE-43AB-80BC-68537C4C316E}"
-	ProjectSection(SolutionItems) = preProject
-		Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp = Chance.MvvmCross.Plugins.UserInteraction.Touch\UserInteractionPluginBootstrap.cs.pp
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C6C2BCE6-73AC-4EDC-A08D-B12B2FF434CB}"
 	ProjectSection(SolutionItems) = preProject
-		nuspec\pack.bat = nuspec\pack.bat
+		nuspec\pack.ps1 = nuspec\pack.ps1
 		readme.md = readme.md
 		nuspec\Vapolia.MvvmCross.UserInteraction.nuspec = nuspec\Vapolia.MvvmCross.UserInteraction.nuspec
 	EndProjectSection
@@ -49,10 +37,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{7EDF8691-1C9C-4453-9564-CE4A651E7824} = {CE291FF3-DF0C-4946-B6BD-F083D5CAF14B}
-		{BB599BA6-F8DE-43AB-80BC-68537C4C316E} = {CE291FF3-DF0C-4946-B6BD-F083D5CAF14B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E27679B8-83D6-4D73-BC44-F0F321B9954F}

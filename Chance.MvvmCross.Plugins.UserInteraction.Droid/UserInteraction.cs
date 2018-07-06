@@ -255,8 +255,28 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
             }
 
             public CancellationToken UserDismissedToken { get; }
-	        public string Title { set { if(Dialog!=null) Context?.RunOnUiThread(() => Dialog.SetTitle(value)); title = value; } get => title; }
-	        public string Body { set { if (Dialog != null) Context?.RunOnUiThread(() => Dialog.SetMessage(value)); body = value; } get => body; }
+	        public string Title { set { if(Dialog!=null) Context?.RunOnUiThread(() =>
+	        {
+	            try
+	            {
+	                Dialog.SetTitle(value);
+	            }
+	            catch(ObjectDisposedException)
+	            {
+	                Console.WriteLine("WaitIndicator: Title can not be set: Dialog is disposed");
+	            }
+	        }); title = value; } get => title; }
+	        public string Body { set { if (Dialog != null) Context?.RunOnUiThread(() =>
+	        {
+	            try
+	            {
+	                Dialog.SetMessage(value);
+	            }
+	            catch(ObjectDisposedException)
+	            {
+	                Console.WriteLine("WaitIndicator: Body can not be set: Dialog is disposed");
+	            }
+	        }); body = value; } get => body; }
 	    }
 
 	    public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title = null, int? displayAfterSeconds = null, bool userCanDismiss = true)
@@ -293,7 +313,11 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	                wi.Context = activity;
 	                wi.Dialog = dialog;
                     dialog.Show();
-	                dismiss.Register(() => activity.RunOnUiThread(dialog.Dismiss));
+	                dismiss.Register(() =>
+	                {
+	                    wi.Dialog = null;
+	                    activity.RunOnUiThread(dialog.Dismiss);
+	                });
 	            });
 	        }, TaskContinuationOptions.OnlyOnRanToCompletion);
 

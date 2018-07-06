@@ -1,12 +1,10 @@
 MvvmCross-UserInteraction Plugin
 ================================
 
-MvvmCross plugin for interacting with the user from a view model. 
+MvvmCross plugin for interacting with the user from a view model.
 
 ##Versions
 new: WaitIndicator
-update: async methods were removed, as all methods are already posting code asynchronously on the main thread.
-fix: use RunOnUiThread on android to prevent some random crashes
 
 ##Features
 1. Alert - simple alert to the user, async or optional callback when done
@@ -67,9 +65,3 @@ public ICommand SubmitCommand
 		}
 }
 ```
-
-##Adding to your project
-1. Follow stuarts directions (step 3) - http://slodge.blogspot.com/2012/10/build-new-plugin-for-mvvmcrosss.html
-2. Grab the UserInteractionPluginBootstrap file from appropriate Droid/Touch folder. Drop into your project in the Bootstrap folder, change the namespace.
-
-There is an existing nuget package.
