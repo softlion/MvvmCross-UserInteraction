@@ -11,7 +11,9 @@ using Android.Views;
 using Android.Widget;
 using System.Threading.Tasks;
 using Android.App;
+using Android.Runtime;
 using Android.Support.V7.App;
+using MvvmCross.Logging;
 using MvvmCross.Platforms.Android;
 using AlertDialog = Android.Support.V7.App.AlertDialog;
 using KeyboardType = Android.Content.Res.KeyboardType;
@@ -19,16 +21,53 @@ using KeyboardType = Android.Content.Res.KeyboardType;
 namespace Vapolia.MvvmCross.UserInteraction.Droid
 {
     /// <summary>
-    /// BM: ajout de WaitIndicator
-    /// BM: suppression des actions async inutiles (puisqu'on post sur la main thread)
-    /// BM: remplacement par RunOnUiThread qui ne plante pas
-    /// </summary>
-	public class UserInteraction : IUserInteraction
+    /// Theming
+    ///
+    ///<![CDATA[
+    ///<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+    ///   <!-- Used for the buttons -->
+    ///   <item name="colorAccent">#FFC107</item>
+    ///   <!-- Used for the title and text -->
+    ///   <item name="android:textColorPrimary">#FFFFFF</item>
+    ///   <!-- Used for the background -->
+    ///   <item name="android:background">#4CAF50</item>
+    ///</style>
+    ///
+    ///In order to change the Appearance of the Title, you can do the following. First add a new style:
+    ///
+    ///<style name="MyTitleTextStyle">
+    ///   <item name="android:textColor">#FFEB3B</item>
+    ///   <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
+    ///</style>
+    ///afterwards simply reference this style in your MyAlertDialogStyle:
+    ///
+    ///<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+    ///   ...
+    ///   <item name="android:windowTitleStyle">@style/MyTitleTextStyle</item>
+    ///</style>    
+    ///]]>
+	public sealed class UserInteraction : IUserInteraction
 	{
         private readonly IMvxAndroidCurrentTopActivity topActivityFinder;
-        protected Activity CurrentActivity => topActivityFinder.Activity;
+        private readonly IMvxLog log;
+        private int themeResId;
+        private Activity CurrentActivity
+        {
+            get
+            {
+                var activity = topActivityFinder.Activity;
+                log.Warn("UserInteraction: IMvxAndroidCurrentTopActivity.Activity is null!");
+                return activity;
+            }
+        }
 
-	    /// <summary>
+        public int ThemeResId
+        {
+            get => themeResId;
+            set => themeResId = value;
+        }
+
+        /// <summary>
         /// Not used. In android use global styles instead.
         /// </summary>
         public uint DefaultColor { set {} }
@@ -49,7 +88,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //    if (CurrentActivity != null)
         //    {
         //        CurrentActivity.RunOnUiThread(() => 
-        //            new AlertDialog.Builder(CurrentActivity)
+        //            new AlertDialog.Builder(CurrentActivity,themeResId)
         //            .SetMessage(message)
         //            .SetTitle(title)
         //            .SetPositiveButton(okButton, delegate
@@ -66,9 +105,19 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //    }
         //}
 
-        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder)
+        [Preserve(Conditional = true)]
+        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder, IMvxLog logger)
         {
             this.topActivityFinder = topActivityFinder;
+            log = logger;
+        }
+
+        [Preserve(Conditional = true)]
+        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder, IMvxLog logger, int themeResId)
+        {
+            this.topActivityFinder = topActivityFinder;
+            log = logger;
+            this.themeResId = themeResId;
         }
 
         public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
@@ -79,7 +128,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 		    {
                 activity.RunOnUiThread(() =>
                 {
-                    var dialog = new AlertDialog.Builder(activity)
+                    var dialog = new AlertDialog.Builder(activity,themeResId)
                         .SetMessage(message)
                         .SetTitle(title)
                         .SetCancelable(false)
@@ -118,7 +167,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	        var activity = CurrentActivity;
 	        activity?.RunOnUiThread(() =>
 	        {
-	            new AlertDialog.Builder(activity)
+	            new AlertDialog.Builder(activity,themeResId)
 	                .SetMessage(message)
 	                .SetTitle(title)
 	                .SetPositiveButton(positive, delegate
@@ -143,7 +192,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //    {
         //        CurrentActivity.RunOnUiThread(() =>
         //        {
-        //            new AlertDialog.Builder(CurrentActivity)
+        //            new AlertDialog.Builder(CurrentActivity,themeResId)
         //                .SetMessage(message)
         //                .SetTitle(title)
         //                .SetPositiveButton(okButton, (s,e) =>
@@ -156,45 +205,6 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //    }
         //}
 
-/*
- TODO: style
-<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
-    <!-- Used for the buttons -->
-    <item name="colorAccent">#FFC107</item>
-    <!-- Used for the title and text -->
-    <item name="android:textColorPrimary">#FFFFFF</item>
-    <!-- Used for the background -->
-    <item name="android:background">#4CAF50</item>
-</style>
-
-            In order to change the Appearance of the Title, you can do the following. First add a new style:
-
-<style name="MyTitleTextStyle">
-    <item name="android:textColor">#FFEB3B</item>
-    <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
-</style>
-afterwards simply reference this style in your MyAlertDialogStyle:
-
-<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
-    ...
-    <item name="android:windowTitleStyle">@style/MyTitleTextStyle</item>
-</style>    
-
-
-
-            <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
-    <!-- Used for the buttons -->
-    <item name="colorAccent">#FFC107</item>
-    <!-- Used for the title and text -->
-    <item name="android:textColorPrimary">#FFFFFF</item>
-    <!-- Used for the background -->
-    <item name="android:background">#4CAF50</item>
-
-
-    <item name="android:textColor">@null</item>
-    <item name="android:textSize">@null</item>
-</style>
-*/
 
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{
@@ -204,7 +214,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
             {
                 activity.RunOnUiThread(() =>
                 {
-                    var dialog = new AlertDialog.Builder(activity) //new AlertDialog.Builder(activity, R.style.MyAlertDialogStyle)
+                    var dialog = new AlertDialog.Builder(activity,themeResId)
                         .SetMessage(message)
                         .SetTitle(title)
                         .SetOnCancelListener(new DialogCancelledListener(() =>
@@ -249,7 +259,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
 	                    input.SetFilters(filters.ToArray());
 	                }
 
-	                var dialog = new AlertDialog.Builder(activity)
+	                var dialog = new AlertDialog.Builder(activity,themeResId)
 		                .SetMessage(message)
 		                .SetTitle(title)
 		                .SetView(input)
@@ -347,7 +357,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
 	                    LayoutParameters = new LinearLayout.LayoutParams(DpToPixel(50), DpToPixel(50)) {Gravity = GravityFlags.CenterHorizontal | GravityFlags.CenterVertical},
 	                };
 
-	                var dialog = new AlertDialog.Builder(activity)
+	                var dialog = new AlertDialog.Builder(activity,themeResId)
 	                    .SetTitle(wi.Title)
 	                    .SetMessage(wi.Body)
 	                    .SetView(input)
@@ -386,7 +396,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
                         var input = new ProgressBar(activity) { Indeterminate = true, LayoutParameters = new FrameLayout.LayoutParams(DpToPixel(100), DpToPixel(100)) {Gravity = GravityFlags.Center}};
                         layout.AddView(input);
 
-                        /*var dialog = new AlertDialog.Builder(activity)
+                        /*var dialog = new AlertDialog.Builder(activity,themeResId)
                             .SetView(input)
                             .SetCancelable(false)
                             .Create();*/
@@ -451,7 +461,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
         {
             var tcs = new TaskCompletionSource<int>();
 
-            Action cancelAction = () => tcs.TrySetResult(0);
+            void CancelAction() => tcs.TrySetResult(0);
 
             var activity = CurrentActivity;
             if (activity != null)
@@ -475,7 +485,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
 	                    //cancelButtonIndex = items.Count - 1;
 	                //}
 
-	                var ad = new AlertDialog.Builder(activity)
+	                var ad = new AlertDialog.Builder(activity,themeResId)
                         .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
                         .SetItems(items.Where(b => b!=null).ToArray(), (s, args) =>
                         {
@@ -514,12 +524,12 @@ afterwards simply reference this style in your MyAlertDialogStyle:
 	                ad.CancelEvent += (sender, args) =>
 	                {
                         //Mvx.Trace("Dialog cancelled");
-	                    cancelAction();
+	                    CancelAction();
 	                };
 	                ad.DismissEvent += (sender, args) =>
 	                {
                         //Mvx.Trace("Dialog dismissed");
-	                    cancelAction();
+	                    CancelAction();
 	                };
                     ad.Show();
 
@@ -528,7 +538,7 @@ afterwards simply reference this style in your MyAlertDialogStyle:
 	                    activity.RunOnUiThread(() =>
 	                    {
 	                        ad.Dismiss();
-	                        cancelAction();
+	                        CancelAction();
 	                    });
 	                });
 	            });
