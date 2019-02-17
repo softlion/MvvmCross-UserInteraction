@@ -31,8 +31,8 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Cirrious.FluentLayout" Version="2.7.0" />
-    <PackageReference Include="MvvmCross" Version="6.1.2" />
+    <PackageReference Include="Cirrious.FluentLayout" Version="2.9.0" />
+    <PackageReference Include="MvvmCross" Version="6.2.3" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -46,7 +46,6 @@
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
   <ItemGroup>
     <Compile Include="UserInteraction.cs" />
-    <Compile Include="Plugin.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

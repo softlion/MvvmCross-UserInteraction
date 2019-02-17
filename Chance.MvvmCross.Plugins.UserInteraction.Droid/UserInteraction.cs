@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Android.App;
 using Android.Content;
 using Android.Content.Res;
 using Android.Graphics;
@@ -11,8 +10,10 @@ using Android.Text;
 using Android.Views;
 using Android.Widget;
 using System.Threading.Tasks;
-using MvvmCross;
+using Android.App;
+using Android.Support.V7.App;
 using MvvmCross.Platforms.Android;
+using AlertDialog = Android.Support.V7.App.AlertDialog;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
 namespace Vapolia.MvvmCross.UserInteraction.Droid
@@ -24,7 +25,8 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
     /// </summary>
 	public class UserInteraction : IUserInteraction
 	{
-	    protected Activity CurrentActivity => Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity;
+        private readonly IMvxAndroidCurrentTopActivity topActivityFinder;
+        protected Activity CurrentActivity => topActivityFinder.Activity;
 
 	    /// <summary>
         /// Not used. In android use global styles instead.
@@ -63,6 +65,11 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //            .Show());
         //    }
         //}
+
+        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder)
+        {
+            this.topActivityFinder = topActivityFinder;
+        }
 
         public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
 		{
@@ -149,6 +156,46 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //    }
         //}
 
+/*
+ TODO: style
+<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+    <!-- Used for the buttons -->
+    <item name="colorAccent">#FFC107</item>
+    <!-- Used for the title and text -->
+    <item name="android:textColorPrimary">#FFFFFF</item>
+    <!-- Used for the background -->
+    <item name="android:background">#4CAF50</item>
+</style>
+
+            In order to change the Appearance of the Title, you can do the following. First add a new style:
+
+<style name="MyTitleTextStyle">
+    <item name="android:textColor">#FFEB3B</item>
+    <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
+</style>
+afterwards simply reference this style in your MyAlertDialogStyle:
+
+<style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+    ...
+    <item name="android:windowTitleStyle">@style/MyTitleTextStyle</item>
+</style>    
+
+
+
+            <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+    <!-- Used for the buttons -->
+    <item name="colorAccent">#FFC107</item>
+    <!-- Used for the title and text -->
+    <item name="android:textColorPrimary">#FFFFFF</item>
+    <!-- Used for the background -->
+    <item name="android:background">#4CAF50</item>
+
+
+    <item name="android:textColor">@null</item>
+    <item name="android:textSize">@null</item>
+</style>
+*/
+
 		public Task Alert(string message, string title = "", string okButton = "OK")
 		{
             var tcs = new TaskCompletionSource<object>();
@@ -157,7 +204,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
             {
                 activity.RunOnUiThread(() =>
                 {
-                    var dialog = new AlertDialog.Builder(activity)
+                    var dialog = new AlertDialog.Builder(activity) //new AlertDialog.Builder(activity, R.style.MyAlertDialogStyle)
                         .SetMessage(message)
                         .SetTitle(title)
                         .SetOnCancelListener(new DialogCancelledListener(() =>
@@ -344,7 +391,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
                             .SetCancelable(false)
                             .Create();*/
 
-                        var dialog = new Dialog(activity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
+                        var dialog = new AppCompatDialog(activity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
                         dialog.SetContentView(layout);
                         dialog.SetCancelable(false);
                         //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);
