@@ -18,7 +18,7 @@ cd nuspec
 
 del *.nupkg
 
-$version="1.0.7"
+$version="1.0.8"
 nuget pack "Vapolia.MvvmCross.UserInteraction.nuspec" -Version $version
 nuget push "Vapolia.MvvmCross.UserInteraction*.nupkg" -Source $nugetServer
 

@@ -491,6 +491,8 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	                    //cancelButtonIndex = items.Count - 1;
 	                //}
 
+                    AlertDialog ad;
+
                     void OnItemSelected(DialogClickEventArgs args, bool closeOnSelect)
                     {
                         var buttonIndex = args.Which;
@@ -517,6 +519,9 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 
                             tcs.TrySetResult(2 + realIndex);
                         }
+
+                        if(closeOnSelect)
+                            ad.Dismiss();
                     }
 
                     var adBuilder = new AlertDialog.Builder(activity, themeResId)
@@ -533,7 +538,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
                     if (description != null)
                         adBuilder.SetMessage(description);
 
-                    var ad = adBuilder.Create();
+                    ad = adBuilder.Create();
                     ad.SetCanceledOnTouchOutside(userCanDismiss);
 
 	                ad.CancelEvent += (sender, args) =>
