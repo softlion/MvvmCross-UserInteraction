@@ -491,7 +491,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	                    //cancelButtonIndex = items.Count - 1;
 	                //}
 
-                    AlertDialog ad;
+                    AlertDialog ad = null;
 
                     void OnItemSelected(DialogClickEventArgs args, bool closeOnSelect)
                     {
