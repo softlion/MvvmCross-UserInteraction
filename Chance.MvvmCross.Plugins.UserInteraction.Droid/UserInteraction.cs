@@ -439,6 +439,11 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	        return tcs.Task;	   
         }
 
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        {
+            return Menu(dismiss, userCanDismiss, title, null, -1, cancelButton, destroyButton, otherButtons);
+        }
+
         /// <summary>
         /// Displays a system menu.
         /// If otherButtons is null, the indexes are still incremented, but the button won't appear. 
@@ -447,17 +452,18 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         /// <param name="dismiss"></param>
         /// <param name="userCanDismiss"></param>
         /// <param name="title"></param>
-        /// <param name="cancelButton"></param>
-        /// <param name="destroyButton"></param>
+        /// <param name="description">optional</param>
+        /// <param name="defaultActionIndex">from 2 to 2+number of actions. Otherwise ignored.</param>
+        /// <param name="cancelButton">optional</param>
+        /// <param name="destroyButton">optional</param>
         /// <param name="otherButtons">If a button is null, the index are still incremented, but the button won't appear</param>
-        /// <returns></returns>
-        /// <remarks>
+        /// <returns>
         /// Button indexes:
         /// cancel: 0 (never displayed on Android. Use hardware back button instead)
         /// destroy: 1
         /// others: 2+index
-        /// </remarks>
-        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        /// </returns>
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons)
         {
             var tcs = new TaskCompletionSource<int>();
 
@@ -485,40 +491,49 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	                    //cancelButtonIndex = items.Count - 1;
 	                //}
 
-	                var ad = new AlertDialog.Builder(activity,themeResId)
-                        .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
-                        .SetItems(items.Where(b => b!=null).ToArray(), (s, args) =>
+                    void OnItemSelected(DialogClickEventArgs args, bool closeOnSelect)
+                    {
+                        var buttonIndex = args.Which;
+                        //Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
+
+                        if ((cancelButton != null && buttonIndex == cancelButtonIndex) || buttonIndex < 0)
+                            tcs.TrySetResult(0);
+                        else if (destroyButton != null && buttonIndex == destructiveButtonIndex)
+                            tcs.TrySetResult(1);
+                        else
                         {
-                            var buttonIndex = args.Which;
-                            //Mvx.Trace("Dialog item clicked: {0}", buttonIndex);
-
-                            if ((cancelButton != null && buttonIndex == cancelButtonIndex) || buttonIndex < 0)
-                                tcs.TrySetResult(0);
-                            else if (destroyButton != null && buttonIndex == destructiveButtonIndex)
-                                tcs.TrySetResult(1);
+                            if (destructiveButtonIndex >= 0)
+                                buttonIndex++;
                             else
+                                buttonIndex += 2;
+
+                            //Correct the index given the number of holes
+                            var n = buttonIndex - 2;
+                            var realIndex = 0;
+                            while (n != 0)
                             {
-                                if (destructiveButtonIndex >= 0)
-                                    buttonIndex++;
-                                else
-                                    buttonIndex += 2;
-
-                                //Correct the index given the number of holes
-                                var n = buttonIndex-2;
-                                var realIndex = 0;
-                                while (n != 0)
-                                {
-                                    if (items[realIndex++] != null)
-                                        n--;
-                                }
-
-                                tcs.TrySetResult(2+ realIndex);
+                                if (items[realIndex++] != null) n--;
                             }
 
-                        })
+                            tcs.TrySetResult(2 + realIndex);
+                        }
+                    }
+
+                    var adBuilder = new AlertDialog.Builder(activity, themeResId)
+                        .SetTitle(title) //Titles on AlertDialogs are limited to 2 lines, and if SetMessage is used SetItems does not work.
                         //.SetInverseBackgroundForced(true) //This method was deprecated in API level 23. This flag is only used for pre-Material themes. Instead, specify the window background using on the alert dialog theme.
-                        .SetCancelable(userCanDismiss)
-                        .Create();
+                        .SetCancelable(userCanDismiss);
+
+                    if (defaultActionIndex < 2)
+                        adBuilder.SetItems(items.Where(b => b != null).ToArray(), (sender, args) => OnItemSelected(args, false));
+                    else
+                        adBuilder.SetSingleChoiceItems(items.Where(b => b != null).ToArray(), defaultActionIndex - 2 + (destructiveButtonIndex >= 0 ? 1 : 0), (sender, args) => OnItemSelected(args, true));
+
+
+                    if (description != null)
+                        adBuilder.SetMessage(description);
+
+                    var ad = adBuilder.Create();
                     ad.SetCanceledOnTouchOutside(userCanDismiss);
 
 	                ad.CancelEvent += (sender, args) =>

@@ -71,22 +71,31 @@ namespace Vapolia.MvvmCross.UserInteraction
         /// <returns></returns>
         Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null);
 
-	    /// <summary>
-	    /// Display a single choice menu
-	    /// </summary>
-	    /// <param name="dismiss">optional. Can be used to close the menu programatically.</param>
-	    /// <param name="userCanDismiss">true to allow the user to close the menu using a hardware key.</param>
-	    /// <param name="title">optional title</param>
-	    /// <param name="cancelButton">optional cancel button. If null the cancel button is not shown.</param>
-	    /// <param name="destroyButton">optional destroy button. Will be red.</param>
-	    /// <param name="otherButtons">other buttons</param>
-	    /// <returns>
-	    /// A task which completes when the menu has disappeared
-	    /// 0: cancel button or hardware key is pressed
-	    /// 1: destroy button is pressed
-	    /// 2-n: other matching button is pressed
-	    /// </returns>
-	    Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons);
+
+        /// <summary>
+        /// Display a single choice menu
+        /// </summary>
+        /// <param name="dismiss">optional. Can be used to close the menu programatically.</param>
+        /// <param name="userCanDismiss">true to allow the user to close the menu using a hardware key.</param>
+        /// <param name="title">optional title</param>
+        /// <param name="description">optional description</param>
+        /// <param name="defaultActionIndex">from 2 to 2+number of actions. Otherwise ignored.</param>
+        /// <param name="cancelButton">optional cancel button. If null the cancel button is not shown.</param>
+        /// <param name="destroyButton">optional destroy button. Will be red.</param>
+        /// <param name="otherButtons">If a button is null, the index are still incremented, but the button won't appear</param>
+        /// <returns>
+        /// A task which completes when the menu has disappeared
+        /// 0: cancel button or hardware key is pressed
+        /// 1: destroy button is pressed
+        /// 2-n: other matching button is pressed
+        /// </returns>
+        /// <remarks>
+        /// If otherButtons is null, the indexes are still incremented, but the button won't appear. 
+        /// This enables easy scenario where the otherButtons array is changing between calls.
+        /// </remarks>
+        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons);
+	    
+        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons);
 
         /// <summary>
         /// 

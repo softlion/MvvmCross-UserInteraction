@@ -280,6 +280,10 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
             return tcs.Task;
         }
 
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        {
+            return Menu(dismiss, userCanDismiss, title, null, -1, cancelButton, destroyButton, otherButtons);
+        }
 
         /// <summary>
         /// Displays a system menu.
@@ -289,52 +293,69 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
         /// <param name="dismiss"></param>
         /// <param name="userCanDismiss"></param>
         /// <param name="title"></param>
-        /// <param name="cancelButton"></param>
-        /// <param name="destroyButton"></param>
+        /// <param name="description">optional</param>
+        /// <param name="defaultActionIndex">from 2 to 2+number of actions. Otherwise ignored.</param>
+        /// <param name="cancelButton">optional</param>
+        /// <param name="destroyButton">optional</param>
         /// <param name="otherButtons">If a button is null, the index are still incremented, but the button won't appear</param>
-        /// <returns></returns>
-        /// <remarks>
+        /// <returns>
         /// Button indexes:
         /// cancel: 0
         /// destroy: 1
         /// others: 2+index
-        /// 
-        /// 
-        /// </remarks>
-	    public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
+        /// </returns>
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons)
         {
             var tcs = new TaskCompletionSource<int>();
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
-	        {
-	            var actionSheet = new UIActionSheet(title, (IUIActionSheetDelegate)null, cancelButton, destroyButton, otherButtons.Where(b => b!=null).ToArray());
-	            var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() => actionSheet.DismissWithClickedButtonIndex(actionSheet.CancelButtonIndex, false)));
-	            // ReSharper disable once MethodSupportsCancellation
-	            tcs.Task.ContinueWith(t => registration.Dispose());
-
-                actionSheet.Canceled += (sender, args) => tcs.TrySetResult(0);
-	            actionSheet.Clicked += (sender, args) =>
-	            {
-	                //Mvx.Warning("clicked: {0}, FirstOtherButtonIndex: {1}, cancel index: {2}, destroy index: {3}", args.ButtonIndex, actionSheet.FirstOtherButtonIndex, actionSheet.CancelButtonIndex, actionSheet.DestructiveButtonIndex);
-	                if ((cancelButton!=null && args.ButtonIndex == actionSheet.CancelButtonIndex) || args.ButtonIndex < 0)
-	                    tcs.TrySetResult(0);
-	                else if (destroyButton!=null && args.ButtonIndex == actionSheet.DestructiveButtonIndex)
-	                    tcs.TrySetResult(1);
-	                else
-	                {
-	                    var titleClicked = actionSheet.ButtonTitle(args.ButtonIndex);
-	                    var index = 2 + Array.IndexOf(otherButtons, titleClicked);
-                        //ios scrumbles the position of buttons. Method not usable.
-	                    //var index = actionSheet.FirstOtherButtonIndex < 0 ? args.ButtonIndex - 1 : args.ButtonIndex - actionSheet.FirstOtherButtonIndex;
-	                    tcs.TrySetResult(index);
-	                }
-	            };
-
+            {
                 var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-	            if (currentView != null)
-	            {
+                if (currentView != null)
+                {
+                    var alertController = UIAlertController.Create(title, description, UIAlertControllerStyle.ActionSheet);
+                    alertController.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
+
+                    if (UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad)
+                    {
+                        alertController.ModalPresentationStyle = UIModalPresentationStyle.Popover;
+                        var presenter = alertController.PopoverPresentationController;
+                        presenter.SourceView = currentView;
+                        presenter.SourceRect = new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1);
+                    }
+
+                    if (cancelButton != null)
+                        alertController.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(0)));
+                    if (destroyButton != null)
+                        alertController.AddAction(UIAlertAction.Create(destroyButton, UIAlertActionStyle.Destructive, action => tcs.TrySetResult(1)));
+
+                    UIAlertAction defaultAction = null;
+                    var iAction = 2;
+                    foreach (var button in otherButtons)
+                    {
+                        var iActionIndex = iAction++;
+                        if (button != null)
+                        {
+                            var alertAction = UIAlertAction.Create(button, UIAlertActionStyle.Default, action => tcs.TrySetResult(iActionIndex));
+                            alertController.AddAction(alertAction);
+                            if (defaultActionIndex == iActionIndex)
+                                defaultAction = alertAction;
+                        }
+                    }
+                    alertController.PreferredAction = defaultAction;
+
+                        var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                    {
+                        alertController.DismissViewController(true, null);
+                        tcs.TrySetResult(0);
+                    }));
+
+	                // ReSharper disable once MethodSupportsCancellation
+	                tcs.Task.ContinueWith(t => registration.Dispose());
+
 	                //Show from bottom
-	                actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+	                //actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+                    currentView.RootViewController.PresentViewController(alertController, true, null);
 	            }
 	            else
 	            {
