@@ -9,8 +9,9 @@ $nugetServer="http://nugets.vapolia.fr/"
 
 #####################
 #Build release config
+cd $PSScriptRoot
 cd ..
-$msbuild = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe'
+$msbuild = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe'
 nuget restore
 $msbuildparams = '/t:Clean;Build', '/p:Configuration=Release', '/p:Platform=Any CPU', 'Vapolia.MvvmCross.UserInteraction.sln'
 & $msbuild $msbuildparams
@@ -18,7 +19,7 @@ cd nuspec
 
 del *.nupkg
 
-$version="1.0.8"
+$version="1.0.9"
 nuget pack "Vapolia.MvvmCross.UserInteraction.nuspec" -Version $version
 nuget push "Vapolia.MvvmCross.UserInteraction*.nupkg" -Source $nugetServer
 

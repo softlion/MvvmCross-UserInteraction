@@ -56,7 +56,8 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
             get
             {
                 var activity = topActivityFinder.Activity;
-                log.Warn("UserInteraction: IMvxAndroidCurrentTopActivity.Activity is null!");
+                if(activity == null)
+                    log.Warn("UserInteraction: IMvxAndroidCurrentTopActivity.Activity is null!");
                 return activity;
             }
         }
