@@ -6,11 +6,19 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using UIKit;
 using System.Threading.Tasks;
+using MvvmCross;
 using MvvmCross.Logging;
+using MvvmCross.Platforms.Ios.Presenters;
 
 namespace Vapolia.MvvmCross.UserInteraction.Touch
 {
-	public class UserInteraction : IUserInteraction
+    public interface IIosViewPresenterEx
+    {
+        UIViewController CurrentTopNavigationControllerForModals { get; }
+    }
+
+
+    public class UserInteraction : IUserInteraction
     {
         private readonly IMvxLog log;
         private static UIColor defaultColor;
@@ -310,9 +318,17 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-                var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-                if (currentView != null)
+                UIViewController presentingVc;
+                if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+                    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+                else
+                    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+
+                //var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
+                if (presentingVc != null)
                 {
+                    var currentView = presentingVc.View;
+
                     var alertController = UIAlertController.Create(title, description, UIAlertControllerStyle.ActionSheet);
                     alertController.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
 
@@ -344,7 +360,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
                     }
                     alertController.PreferredAction = defaultAction;
 
-                        var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                    var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
                     {
                         alertController.DismissViewController(true, null);
                         tcs.TrySetResult(0);
@@ -353,9 +369,9 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 	                // ReSharper disable once MethodSupportsCancellation
 	                tcs.Task.ContinueWith(t => registration.Dispose());
 
-	                //Show from bottom
-	                //actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
-                    currentView.RootViewController.PresentViewController(alertController, true, null);
+                    //Show from bottom
+                    //actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+                    presentingVc.PresentViewController(alertController, true, null);
 	            }
 	            else
 	            {

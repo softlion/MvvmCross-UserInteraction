@@ -12,7 +12,7 @@
 		<tags>mvvmcross xamarin</tags>
 		<dependencies>
       <group>
-        <dependency id="MvvmCross" version="6.2.3" />
+        <dependency id="MvvmCross" version="6.3.1" />
       </group>
       <group targetFramework="Xamarin.iOS10">
         <dependency id="Cirrious.FluentLayout" version="2.9.0" />
