@@ -135,20 +135,27 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 	            }
 	        }
 
-	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
-	        {
-	            var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
-	            alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text)));
-	            alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null)));
-	            alert.AddTextField(ConfigureTextField);
-	            var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-	            if (currentView?.RootViewController != null)
-	                currentView.RootViewController.PresentViewController(alert, true, null);
-	            else
-	                log.Warn("Input: no window/nav controller on which to display");
-	        });
+            UIViewController presentingVc;
+            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            else
+                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
 
-	        return tcs.Task;
+            if (presentingVc != null)
+            {
+                UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                {
+                    var alert = UIAlertController.Create(title ?? string.Empty, message, UIAlertControllerStyle.Alert);
+                    alert.AddAction(UIAlertAction.Create(okButton, UIAlertActionStyle.Default, action => tcs.TrySetResult(alert.TextFields[0].Text)));
+                    alert.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(null)));
+                    alert.AddTextField(ConfigureTextField);
+                    presentingVc.PresentViewController(alert, true, null);
+                });
+            }
+            else
+                log.Warn("Input: no window/nav controller on which to display");
+
+            return tcs.Task;
 	    }
 
         class WaitIndicatorImpl : IWaitIndicator
@@ -220,6 +227,17 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 
         public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
         {
+            UIViewController presentingVc;
+            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            else
+                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            if (presentingVc == null)
+            {
+                log.Warn("UserInteraction.ActivityIndicator: no window on which to display");
+                return Task.CompletedTask;
+            }
+
             var tcs = new TaskCompletionSource<int>();
 
             Task.Delay((int)((apparitionDelay ?? 0)*1000+.5), dismiss).ContinueWith(t =>
@@ -228,57 +246,51 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
                 {
                     UIApplication.SharedApplication.InvokeOnMainThread(() =>
                     {
-                        var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-                        if (currentView != null)
+                        var currentView = presentingVc?.View;
+
+                        var waitView = new UIView {Alpha = 0};
+                        var overlay = new UIView {BackgroundColor = UIColor.White, Alpha = 0.7f};
+                        var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) {HidesWhenStopped = true};
+                        if (argbColor.HasValue || defaultColor != null)
+                            indicator.Color = argbColor.HasValue ? FromArgb(argbColor.Value) : defaultColor;
+
+                        waitView.Add(overlay);
+                        waitView.Add(indicator);
+                        currentView.Add(waitView);
+
+                        waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+                        waitView.AddConstraints(
+                            overlay.AtTopOf(waitView),
+                            overlay.AtLeftOf(waitView),
+                            overlay.AtBottomOf(waitView),
+                            overlay.AtRightOf(waitView),
+
+                            indicator.WithSameCenterX(waitView),
+                            indicator.WithSameCenterY(waitView),
+                            indicator.Width().EqualTo(60),
+                            indicator.Height().EqualTo(60)
+                        );
+
+                        waitView.TranslatesAutoresizingMaskIntoConstraints = false;
+                        currentView.AddConstraints(
+                            waitView.AtTopOf(currentView),
+                            waitView.AtLeftOf(currentView),
+                            waitView.AtRightOf(currentView),
+                            waitView.AtBottomOf(currentView)
+                        );
+
+                        UIView.Animate(0.4, () => { waitView.Alpha = 1; });
+                        indicator.StartAnimating();
+
+                        var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
                         {
-                            var waitView = new UIView {Alpha = 0};
-                            var overlay = new UIView {BackgroundColor = UIColor.White, Alpha = 0.7f};
-                            var indicator = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge) {HidesWhenStopped = true};
-                            if (argbColor.HasValue || defaultColor != null)
-                                indicator.Color = argbColor.HasValue ? FromArgb(argbColor.Value) : defaultColor;
-
-                            waitView.Add(overlay);
-                            waitView.Add(indicator);
-                            currentView.Add(waitView);
-
-                            waitView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
-                            waitView.AddConstraints(
-                                overlay.AtTopOf(waitView),
-                                overlay.AtLeftOf(waitView),
-                                overlay.AtBottomOf(waitView),
-                                overlay.AtRightOf(waitView),
-
-                                indicator.WithSameCenterX(waitView),
-                                indicator.WithSameCenterY(waitView),
-                                indicator.Width().EqualTo(60),
-                                indicator.Height().EqualTo(60)
-                                );
-
-                            waitView.TranslatesAutoresizingMaskIntoConstraints = false;
-                            currentView.AddConstraints(
-                                waitView.AtTopOf(currentView),
-                                waitView.AtLeftOf(currentView),
-                                waitView.AtRightOf(currentView),
-                                waitView.AtBottomOf(currentView)
-                                );
-
-                            UIView.Animate(0.4, () => { waitView.Alpha = 1; });
-                            indicator.StartAnimating();
-
-                            var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
-                            {
-                                indicator.StopAnimating();
-                                waitView.RemoveFromSuperview();
-                                waitView.Dispose();
-                                tcs.TrySetResult(0);
-                            }), true);
-                            // ReSharper disable once MethodSupportsCancellation
-                            tcs.Task.ContinueWith(tt => registration.Dispose());
-                        }
-                        else
-                        {
-                            log.Warn("UserInteraction.ActivityIndicator: no window on which to display");
-                        }
+                            indicator.StopAnimating();
+                            waitView.RemoveFromSuperview();
+                            waitView.Dispose();
+                            tcs.TrySetResult(0);
+                        }), true);
+                        // ReSharper disable once MethodSupportsCancellation
+                        tcs.Task.ContinueWith(tt => registration.Dispose());
                     });
                 }
                 else
@@ -314,88 +326,90 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
         /// </returns>
         public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons)
         {
+            UIViewController presentingVc;
+            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            else
+                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            if (presentingVc == null)
+            {
+                log.Warn("UserInteraction.Menu: no window on which to display");
+                return Task.FromResult(0);
+            }
+
             var tcs = new TaskCompletionSource<int>();
 
 	        UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-                UIViewController presentingVc;
-                if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
-                    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
-                else
-                    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+                var currentView = presentingVc.View;
 
-                //var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-                if (presentingVc != null)
+                var alertController = UIAlertController.Create(title, description, UIAlertControllerStyle.ActionSheet);
+                alertController.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
+
+                if (UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad)
                 {
-                    var currentView = presentingVc.View;
+                    alertController.ModalPresentationStyle = UIModalPresentationStyle.Popover;
+                    var presenter = alertController.PopoverPresentationController;
+                    presenter.SourceView = currentView;
+                    presenter.SourceRect = new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1);
+                }
 
-                    var alertController = UIAlertController.Create(title, description, UIAlertControllerStyle.ActionSheet);
-                    alertController.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
+                if (cancelButton != null)
+                    alertController.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(0)));
+                if (destroyButton != null)
+                    alertController.AddAction(UIAlertAction.Create(destroyButton, UIAlertActionStyle.Destructive, action => tcs.TrySetResult(1)));
 
-                    if (UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad)
+                UIAlertAction defaultAction = null;
+                var iAction = 2;
+                foreach (var button in otherButtons)
+                {
+                    var iActionIndex = iAction++;
+                    if (button != null)
                     {
-                        alertController.ModalPresentationStyle = UIModalPresentationStyle.Popover;
-                        var presenter = alertController.PopoverPresentationController;
-                        presenter.SourceView = currentView;
-                        presenter.SourceRect = new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1);
+                        var alertAction = UIAlertAction.Create(button, UIAlertActionStyle.Default, action => tcs.TrySetResult(iActionIndex));
+                        alertController.AddAction(alertAction);
+                        if (defaultActionIndex == iActionIndex)
+                            defaultAction = alertAction;
                     }
+                }
 
-                    if (cancelButton != null)
-                        alertController.AddAction(UIAlertAction.Create(cancelButton, UIAlertActionStyle.Cancel, action => tcs.TrySetResult(0)));
-                    if (destroyButton != null)
-                        alertController.AddAction(UIAlertAction.Create(destroyButton, UIAlertActionStyle.Destructive, action => tcs.TrySetResult(1)));
+                alertController.PreferredAction = defaultAction;
 
-                    UIAlertAction defaultAction = null;
-                    var iAction = 2;
-                    foreach (var button in otherButtons)
-                    {
-                        var iActionIndex = iAction++;
-                        if (button != null)
-                        {
-                            var alertAction = UIAlertAction.Create(button, UIAlertActionStyle.Default, action => tcs.TrySetResult(iActionIndex));
-                            alertController.AddAction(alertAction);
-                            if (defaultActionIndex == iActionIndex)
-                                defaultAction = alertAction;
-                        }
-                    }
-                    alertController.PreferredAction = defaultAction;
+                var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                {
+                    alertController.DismissViewController(true, null);
+                    tcs.TrySetResult(0);
+                }));
 
-                    var registration = dismiss.Register(() => UIApplication.SharedApplication.InvokeOnMainThread(() =>
-                    {
-                        alertController.DismissViewController(true, null);
-                        tcs.TrySetResult(0);
-                    }));
+                // ReSharper disable once MethodSupportsCancellation
+                tcs.Task.ContinueWith(t => registration.Dispose());
 
-	                // ReSharper disable once MethodSupportsCancellation
-	                tcs.Task.ContinueWith(t => registration.Dispose());
-
-                    //Show from bottom
-                    //actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
-                    presentingVc.PresentViewController(alertController, true, null);
-	            }
-	            else
-	            {
-	                log.Warn("UserInteraction.Menu: no window on which to display");
-	            }
-	        });
+                //Show from bottom
+                //actionSheet.ShowFrom(new CGRect(0, currentView.Bounds.Bottom - 1, currentView.Bounds.Width, 1), currentView, true);
+                presentingVc.PresentViewController(alertController, true, null);
+            });
 
 	        return tcs.Task;
         }
 
         public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
         {
+            UIViewController presentingVc;
+            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            else
+                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            if (presentingVc == null)
+            {
+                log.Warn("UserInteraction.Toast: no window on which to display");
+                return Task.CompletedTask;
+            }
+
             var tcs = new TaskCompletionSource<int>();
 
             UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-                //Find the view on which to display the toast
-                var currentView = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal);
-                if (currentView == null)
-                {
-                    log.Warn("UserInteraction.Toast: no window on which to display");
-                    tcs.TrySetResult(-1);
-                    return;
-                }
+                var currentView = presentingVc.View;
 
                 //UI items
                 var font = UIFont.SystemFontOfSize(UIFont.SmallSystemFontSize);
