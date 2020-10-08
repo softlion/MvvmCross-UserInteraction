@@ -12,13 +12,10 @@ using Android.Widget;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Runtime;
-using Android.Support.V7.App;
-using MvvmCross.Logging;
-using MvvmCross.Platforms.Android;
-using AlertDialog = Android.Support.V7.App.AlertDialog;
+using Microsoft.Extensions.Logging;
 using KeyboardType = Android.Content.Res.KeyboardType;
 
-namespace Vapolia.MvvmCross.UserInteraction.Droid
+namespace Vapolia.UserInteraction.Droid
 {
     /// <summary>
     /// Theming
@@ -46,18 +43,18 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
     ///   <item name="android:windowTitleStyle">@style/MyTitleTextStyle</item>
     ///</style>    
     ///]]>
+    /// </summary>
 	public sealed class UserInteraction : IUserInteraction
 	{
-        private readonly IMvxAndroidCurrentTopActivity topActivityFinder;
-        private readonly IMvxLog log;
+        private readonly ILogger log;
         private int themeResId;
-        private Activity CurrentActivity
+        private Activity? CurrentActivity
         {
             get
             {
-                var activity = topActivityFinder.Activity;
+                var activity = Xamarin.Essentials.Platform.CurrentActivity;
                 if(activity == null)
-                    log.Warn("UserInteraction: IMvxAndroidCurrentTopActivity.Activity is null!");
+                    log.LogWarning("UserInteraction: IMvxAndroidCurrentTopActivity.Activity is null!");
                 return activity;
             }
         }
@@ -107,21 +104,19 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
         //}
 
         [Preserve(Conditional = true)]
-        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder, IMvxLog logger)
+        public UserInteraction(ILogger logger)
         {
-            this.topActivityFinder = topActivityFinder;
             log = logger;
         }
 
         [Preserve(Conditional = true)]
-        public UserInteraction(IMvxAndroidCurrentTopActivity topActivityFinder, IMvxLog logger, int themeResId)
+        public UserInteraction(ILogger logger, int themeResId)
         {
-            this.topActivityFinder = topActivityFinder;
             log = logger;
             this.themeResId = themeResId;
         }
 
-        public Task<bool> Confirm(string message, string title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
+        public Task<bool> Confirm(string message, string? title = null, string okButton = "OK", string cancelButton = "Cancel", CancellationToken? dismiss = null)
 		{
 		    var tcs = new TaskCompletionSource<bool>();
 		    var activity = CurrentActivity;
@@ -129,19 +124,19 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 		    {
                 activity.RunOnUiThread(() =>
                 {
-                    var dialog = new AlertDialog.Builder(activity,themeResId)
-                        .SetMessage(message)
-                        .SetTitle(title)
-                        .SetCancelable(false)
+                    var dialog = new AlertDialog.Builder(activity,themeResId)!
+                        .SetMessage(message)!
+                        .SetTitle(title)!
+                        .SetCancelable(false)!
                         .SetPositiveButton(okButton, (sender, args) => 
                         {
                             tcs.TrySetResult(true);
-                        })
+                        })!
                         .SetNegativeButton(cancelButton, (sender, args) => 
                         {
                             tcs.TrySetResult(false);
-                        })
-                        .Create();
+                        })!
+                        .Create()!;
 
                     dialog.Show();
 
@@ -162,27 +157,27 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 		    return tcs.Task;
 		}
 
-	    public void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
+	    public void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string? title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe")
 	    {
 	        var activity = CurrentActivity;
 	        activity?.RunOnUiThread(() =>
 	        {
-	            new AlertDialog.Builder(activity,themeResId)
-	                .SetMessage(message)
-	                .SetTitle(title)
+	            new AlertDialog.Builder(activity,themeResId)!
+	                .SetMessage(message)!
+	                .SetTitle(title)!
 	                .SetPositiveButton(positive, delegate
 	                {
-                        answer?.Invoke(ConfirmThreeButtonsResponse.Positive);
-                    })
+                        answer.Invoke(ConfirmThreeButtonsResponse.Positive);
+                    })!
 	                .SetNegativeButton(negative, delegate
 	                {
-                        answer?.Invoke(ConfirmThreeButtonsResponse.Negative);
-                    })
+                        answer.Invoke(ConfirmThreeButtonsResponse.Negative);
+                    })!
 	                .SetNeutralButton(neutral, delegate
 	                {
-                        answer?.Invoke(ConfirmThreeButtonsResponse.Neutral);
-                    })
+                        answer.Invoke(ConfirmThreeButtonsResponse.Neutral);
+                    })!
 	                .Show();
 	        });
 	    }
@@ -215,17 +210,17 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
             {
                 activity.RunOnUiThread(() =>
                 {
-                    var dialog = new AlertDialog.Builder(activity,themeResId)
-                        .SetMessage(message)
-                        .SetTitle(title)
+                    var dialog = new AlertDialog.Builder(activity,themeResId)!
+                        .SetMessage(message)!
+                        .SetTitle(title)!
                         .SetOnCancelListener(new DialogCancelledListener(() =>
                         {
                             tcs.TrySetResult(false);
-                        }))
+                        }))!
                         .SetPositiveButton(okButton, (s,e) =>
                         {
                             tcs.TrySetResult(true);
-                        });
+                        })!;
                     dialog.Show();
                 });
             }
@@ -237,9 +232,9 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 		    return tcs.Task;
 		}
 
-	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength=0)
+	    public Task<string?> Input(string message, string? defaultValue = null, string? placeholder = null, string? title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength=0)
 	    {
-	        var tcs = new TaskCompletionSource<string>();
+	        var tcs = new TaskCompletionSource<string?>();
 
 	        var activity = CurrentActivity;
 
@@ -260,20 +255,20 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
 	                    input.SetFilters(filters.ToArray());
 	                }
 
-	                var dialog = new AlertDialog.Builder(activity,themeResId)
-		                .SetMessage(message)
-		                .SetTitle(title)
-		                .SetView(input)
-	                    .SetCancelable(false)
+	                var dialog = new AlertDialog.Builder(activity,themeResId)!
+		                .SetMessage(message)!
+		                .SetTitle(title)!
+		                .SetView(input)!
+	                    .SetCancelable(false)!
 		                .SetPositiveButton(okButton, delegate
 		                {
 		                    tcs.TrySetResult(input.Text);
-		                })
+		                })!
 		                .SetNegativeButton(cancelButton, delegate
 		                {
 		                    tcs.TrySetResult(null);
-		                })
-                        .Create();
+		                })!
+                        .Create()!;
 
 	                if (activity.Resources.Configuration.Keyboard == KeyboardType.Nokeys
 	                    || activity.Resources.Configuration.Keyboard == KeyboardType.Undefined
@@ -402,7 +397,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Droid
                             .SetCancelable(false)
                             .Create();*/
 
-                        var dialog = new AppCompatDialog(activity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
+                        var dialog = new AndroidX.AppCompat.App.AppCompatDialog(activity, Android.Resource.Style.ThemeNoTitleBar); //Theme_Translucent //ThemeNoTitleBarFullScreen
                         dialog.SetContentView(layout);
                         dialog.SetCancelable(false);
                         //dialog.CancelEvent += (sender, args) => tcs.TrySetResult(0);

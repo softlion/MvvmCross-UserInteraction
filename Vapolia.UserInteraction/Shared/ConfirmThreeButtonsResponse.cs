@@ -1,6 +1,6 @@
 using System;
 
-namespace Vapolia.MvvmCross.UserInteraction
+namespace Vapolia.UserInteraction
 {
 	public enum ConfirmThreeButtonsResponse
 	{

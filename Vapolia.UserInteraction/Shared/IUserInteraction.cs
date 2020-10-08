@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Vapolia.MvvmCross.UserInteraction
+namespace Vapolia.UserInteraction
 {
     /// <summary>
     /// Impact displayed keyboard
@@ -46,7 +46,7 @@ namespace Vapolia.MvvmCross.UserInteraction
         //void Alert(string message, Action done = null, string title = "", string okButton = "OK");
 		Task Alert(string message, string title = "", string okButton = "OK");
 
-	    Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0);
+	    Task<string?> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0);
 
 	    void ConfirmThreeButtons(string message, Action<ConfirmThreeButtonsResponse> answer, string title = null, string positive = "Yes", string negative = "No",
 	        string neutral = "Maybe");
@@ -93,9 +93,9 @@ namespace Vapolia.MvvmCross.UserInteraction
         /// If otherButtons is null, the indexes are still incremented, but the button won't appear. 
         /// This enables easy scenario where the otherButtons array is changing between calls.
         /// </remarks>
-        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons);
+        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string? title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons);
 	    
-        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons);
+        Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string? title, string cancelButton, string? destroyButton, params string[] otherButtons);
 
         /// <summary>
         /// 

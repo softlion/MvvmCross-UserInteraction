@@ -1,35 +1,32 @@
 using System;
 using Cirrious.FluentLayouts.Touch;
 using CoreGraphics;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UIKit;
 using System.Threading.Tasks;
-using MvvmCross;
-using MvvmCross.Logging;
-using MvvmCross.Platforms.Ios.Presenters;
+using Microsoft.Extensions.Logging;
+using Xamarin.Essentials;
 
-namespace Vapolia.MvvmCross.UserInteraction.Touch
+
+namespace Vapolia.UserInteraction.Touch
 {
-    public interface IIosViewPresenterEx
-    {
-        UIViewController CurrentTopNavigationControllerForModals { get; }
-    }
+    //public interface IIosViewPresenterEx
+    //{
+    //    UIViewController CurrentTopNavigationControllerForModals { get; }
+    //}
 
 
     public class UserInteraction : IUserInteraction
     {
-        private readonly IMvxLog log;
-        private static UIColor defaultColor;
+        private readonly ILogger log;
+        private static UIColor? defaultColor;
         public uint DefaultColor { set => defaultColor = FromArgb(value); }
 
         UIColor FromArgb(uint value)
-        {
-            return new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
-        }
+            => new UIColor((value >> 16 & 0xff)/255f, (value >> 8 & 0xff)/255f, (value & 0xff)/255f, (value >> 24 & 0xff)/255f);
 
-        public UserInteraction(IMvxLog logger)
+        public UserInteraction(ILogger logger)
         {
             log = logger;
         }
@@ -94,9 +91,9 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 		    return tcs.Task;
 		}
 
-	    public Task<string> Input(string message, string defaultValue = null, string placeholder = null, string title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0)
+	    public Task<string?> Input(string message, string? defaultValue = null, string? placeholder = null, string? title = null, string okButton = "OK", string cancelButton = "Cancel", FieldType fieldType = FieldType.Default, int maxLength = 0)
 	    {
-	        var tcs = new TaskCompletionSource<string>();
+	        var tcs = new TaskCompletionSource<string?>();
 
 	        void ConfigureTextField(UITextField textField)
 	        {
@@ -114,7 +111,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 	                    textField.KeyboardType = UIKeyboardType.NumberPad;
 	                    textField.ValueChanged += (sender, args) =>
 	                    {
-	                        var text = textField.Text;
+	                        var text = textField.Text ?? "";
 	                        var newText = Regex.Replace(text, "[^0-9]", "");
 	                        if (text != newText)
 	                            textField.Text = newText;
@@ -127,19 +124,18 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 	                textField.ValueChanged += (sender, args) =>
 	                {
 	                    var text = textField.Text;
-	                    if (text.Length > maxLength)
-	                    {
+	                    if (text?.Length > maxLength)
 	                        textField.Text = text.Substring(0, maxLength);
-	                    }
 	                };
 	            }
 	        }
 
-            UIViewController presentingVc;
-            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
-                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
-            else
-                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            
+            var presentingVc = Platform.GetCurrentUIViewController();
+            //if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+            //    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            //else
+            //    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
 
             if (presentingVc != null)
             {
@@ -153,16 +149,16 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
                 });
             }
             else
-                log.Warn("Input: no window/nav controller on which to display");
+                log.LogWarning("Input: no window/nav controller on which to display");
 
             return tcs.Task;
 	    }
 
         class WaitIndicatorImpl : IWaitIndicator
         {
-            private string title, body;
+            private string? title, body;
 
-            public UIAlertView Dialog { get; set; }
+            public UIAlertView? Dialog { get; set; }
 
             public WaitIndicatorImpl(CancellationToken userDismissedToken)
             {
@@ -170,8 +166,8 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
             }
 
             public CancellationToken UserDismissedToken { get; }
-            public string Title { set { title = value; if(Dialog!=null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Title = value); } get => title; }
-            public string Body { set { body = value; if (Dialog != null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Message = value); } get => body; }
+            public string? Title { set { title = value; if(Dialog!=null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Title = value); } get => title; }
+            public string? Body { set { body = value; if (Dialog != null) UIApplication.SharedApplication.InvokeOnMainThread(() => Dialog.Message = value); } get => body; }
         }
 
         /// <summary>
@@ -182,7 +178,7 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
         /// <param name="displayAfterSeconds">delay show. Can be cancelled before it is displayed.</param>
         /// <param name="userCanDismiss">Enable tap to dismiss</param>
         /// <returns>CancellationToken is cancelled if the indicator is dismissed by the user (if userCanDismiss is true)</returns>
-        public IWaitIndicator WaitIndicator(CancellationToken dismiss, string message = null, string title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
+        public IWaitIndicator WaitIndicator(CancellationToken dismiss, string? message = null, string? title=null, int? displayAfterSeconds = null, bool userCanDismiss = true)
         {
             var cancellationTokenSource = new CancellationTokenSource();
             var wi = new WaitIndicatorImpl(cancellationTokenSource.Token)
@@ -227,14 +223,14 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 
         public Task ActivityIndicator(CancellationToken dismiss, double? apparitionDelay = null, uint? argbColor = null)
         {
-            UIViewController presentingVc;
-            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
-                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
-            else
-                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            var presentingVc = Platform.GetCurrentUIViewController();
+            //if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+            //    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            //else
+            //    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
             if (presentingVc == null)
             {
-                log.Warn("UserInteraction.ActivityIndicator: no window on which to display");
+                log.LogWarning("UserInteraction.ActivityIndicator: no window on which to display");
                 return Task.CompletedTask;
             }
 
@@ -300,10 +296,8 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
             return tcs.Task;
         }
 
-        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string cancelButton, string destroyButton, params string[] otherButtons)
-        {
-            return Menu(dismiss, userCanDismiss, title, null, -1, cancelButton, destroyButton, otherButtons);
-        }
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string? title, string cancelButton, string? destroyButton, params string[] otherButtons)
+            => Menu(dismiss, userCanDismiss, title, null, -1, cancelButton, destroyButton, otherButtons);
 
         /// <summary>
         /// Displays a system menu.
@@ -324,16 +318,16 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
         /// destroy: 1
         /// others: 2+index
         /// </returns>
-        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string title, string description, int defaultActionIndex, string cancelButton, string destroyButton, params string[] otherButtons)
+        public Task<int> Menu(CancellationToken dismiss, bool userCanDismiss, string? title, string? description, int defaultActionIndex, string? cancelButton, string? destroyButton, params string?[] otherButtons)
         {
-            UIViewController presentingVc;
-            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
-                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
-            else
-                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            var presentingVc = Platform.GetCurrentUIViewController();
+            //if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+            //    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            //else
+            //    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
             if (presentingVc == null)
             {
-                log.Warn("UserInteraction.Menu: no window on which to display");
+                log.LogWarning("UserInteraction.Menu: no window on which to display");
                 return Task.FromResult(0);
             }
 
@@ -394,14 +388,14 @@ namespace Vapolia.MvvmCross.UserInteraction.Touch
 
         public Task Toast(string text, ToastStyle style = ToastStyle.Notice, ToastDuration duration = ToastDuration.Normal, ToastPosition position = ToastPosition.Bottom, int positionOffset = 20, CancellationToken? dismiss = null)
         {
-            UIViewController presentingVc;
-            if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
-                presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
-            else
-                presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
+            var presentingVc = Platform.GetCurrentUIViewController();
+            //if (Mvx.IoCProvider.TryResolve<IIosViewPresenterEx>(out var exPresenter) && exPresenter != null)
+            //    presentingVc = exPresenter.CurrentTopNavigationControllerForModals;
+            //else
+            //    presentingVc = UIApplication.SharedApplication.Windows.LastOrDefault(w => w.WindowLevel == UIWindowLevel.Normal)?.RootViewController;
             if (presentingVc == null)
             {
-                log.Warn("UserInteraction.Toast: no window on which to display");
+                log.LogWarning("UserInteraction.Toast: no window on which to display");
                 return Task.CompletedTask;
             }
 
