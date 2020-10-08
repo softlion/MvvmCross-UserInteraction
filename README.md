@@ -1,3 +1,6 @@
+OBSOLETE: PLEASE USE the mvvmcross free https://github.com/softlion/UserInteraction instead
+
+
 UserInteraction Plugin for Xamarin
 ==================================
 
